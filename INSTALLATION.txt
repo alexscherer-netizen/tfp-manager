@@ -1,0 +1,1588 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TfP Manager</title>
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="TfP Manager">
+<meta name="application-name" content="TfP Manager">
+<meta name="theme-color" content="#0c0c14">
+<meta name="msapplication-TileColor" content="#0c0c14">
+<meta name="msapplication-TileImage" content="icons/icon-144.png">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-152.png">
+<link rel="apple-touch-icon" sizes="72x72" href="icons/icon-72.png">
+<link rel="apple-touch-icon" sizes="96x96" href="icons/icon-96.png">
+<link rel="apple-touch-icon" sizes="128x128" href="icons/icon-128.png">
+<link rel="apple-touch-icon" sizes="144x144" href="icons/icon-144.png">
+<link rel="apple-touch-icon" sizes="152x152" href="icons/icon-152.png">
+<link rel="apple-touch-icon" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" sizes="512x512" href="icons/icon-512.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0c0c14;--surface:#12121f;--card:#181829;--border:#2a2a42;--border-light:#1e1e32;--accent:#c8a96e;--accent-dim:rgba(200,169,110,.08);--accent-mid:rgba(200,169,110,.18);--text:#e8e2d6;--muted:#7a7a96;--dim:#4a4a62;--danger:#c85858;--danger-dim:rgba(200,88,88,.1);--success:#5ec48a;--success-dim:rgba(94,196,138,.1);--warn:#d4924a;--warn-dim:rgba(212,146,74,.1);--info:#5a9fd4;--info-dim:rgba(90,159,212,.1);--sw:230px;--r:10px;--rs:6px}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Jost',sans-serif;font-size:14px;line-height:1.6;overflow:hidden}
+.app{display:flex;height:100vh}
+.sidebar{width:var(--sw);flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:relative;overflow:hidden}
+.sidebar::before{content:'';position:absolute;top:-80px;left:-80px;width:260px;height:260px;background:radial-gradient(circle,rgba(200,169,110,.06) 0%,transparent 70%);pointer-events:none}
+.logo{padding:28px 22px 20px;border-bottom:1px solid var(--border)}
+.logo-mark{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:300;color:var(--accent);letter-spacing:.08em;line-height:1}
+.logo-sub{font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:var(--dim);margin-top:4px;font-weight:500}
+nav{padding:12px 10px;flex:1;overflow-y:auto}
+.nav-item{display:flex;align-items:center;gap:10px;width:100%;padding:9px 12px;border-radius:var(--rs);border:none;background:transparent;color:var(--muted);font-size:12.5px;font-weight:400;font-family:'Jost',sans-serif;cursor:pointer;text-align:left;transition:all .18s;letter-spacing:.02em}
+.nav-item:hover{background:var(--accent-dim);color:var(--text)}
+.nav-item.active{background:var(--accent-dim);color:var(--accent);font-weight:500}
+.nav-sep{height:1px;background:var(--border);margin:8px 10px}
+.ni{width:16px;text-align:center;font-size:13px;color:var(--dim);transition:color .18s}
+.nav-item.active .ni,.nav-item:hover .ni{color:inherit}
+.sidebar-foot{padding:14px 22px;border-top:1px solid var(--border);font-size:11px;color:var(--dim)}
+.main{flex:1;overflow-y:auto;overflow-x:hidden;background:var(--bg)}
+.view{display:none;padding:36px 40px;min-height:100%;animation:fadeIn .2s ease}
+.view.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.page-header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:28px}
+.page-title{font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:400;color:var(--text);line-height:1}
+.page-subtitle{font-size:12.5px;color:var(--muted);margin-top:5px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:22px 24px;margin-bottom:14px}
+.card-sm{padding:14px 18px}
+.card-title{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:500;color:var(--accent);margin-bottom:16px;letter-spacing:.03em}
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:20px}
+.stat-tile{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:18px 16px;text-align:center;position:relative;overflow:hidden}
+.stat-tile::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--accent);opacity:.3}
+.stat-val{font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:400;color:var(--accent);line-height:1.1}
+.stat-lbl{font-size:10.5px;color:var(--muted);margin-top:5px;letter-spacing:.04em;text-transform:uppercase}
+.form-grid{display:grid;gap:14px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.field{display:flex;flex-direction:column;gap:5px}
+.field-label{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:500}
+input[type=text],input[type=email],input[type=number],input[type=date],select,textarea{background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);color:var(--text);padding:9px 12px;font-size:13.5px;font-family:'Jost',sans-serif;outline:none;width:100%;transition:border-color .15s;-webkit-appearance:none;color-scheme:dark}
+input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+textarea{resize:vertical;line-height:1.7}
+select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237a7a96' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:var(--rs);border:1px solid var(--border);background:var(--card);color:var(--text);font-size:12.5px;font-family:'Jost',sans-serif;font-weight:500;cursor:pointer;transition:all .15s;letter-spacing:.03em;white-space:nowrap}
+.btn:hover{border-color:var(--muted);background:var(--surface)}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:#0c0c14}
+.btn-primary:hover{opacity:.88;background:var(--accent)}
+.btn-ghost{background:transparent;border-color:transparent;color:var(--muted)}
+.btn-ghost:hover{background:var(--accent-dim);color:var(--text);border-color:transparent}
+.btn-danger{background:var(--danger-dim);border-color:var(--danger);color:var(--danger)}
+.btn-danger:hover{background:var(--danger);color:#fff}
+.btn-outline{background:transparent;border-color:var(--accent);color:var(--accent)}
+.btn-outline:hover{background:var(--accent-dim)}
+.btn-sm{padding:5px 12px;font-size:11.5px}
+.btn-xs{padding:3px 8px;font-size:11px}
+.btn-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.badge{display:inline-block;padding:2px 9px;border-radius:20px;font-size:10.5px;font-weight:600;letter-spacing:.04em;border:1px solid transparent}
+.badge-ok{background:var(--success-dim);color:var(--success);border-color:rgba(94,196,138,.25)}
+.badge-warn{background:var(--warn-dim);color:var(--warn);border-color:rgba(212,146,74,.25)}
+.badge-err{background:var(--danger-dim);color:var(--danger);border-color:rgba(200,88,88,.25)}
+.badge-info{background:var(--info-dim);color:var(--info);border-color:rgba(90,159,212,.25)}
+.badge-accent{background:var(--accent-mid);color:var(--accent);border-color:rgba(200,169,110,.3)}
+.alert-banner{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--warn-dim);border:1px solid rgba(212,146,74,.3);border-radius:var(--rs);padding:10px 16px;margin-bottom:20px;font-size:12.5px;color:var(--warn)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:8px 12px;color:var(--muted);font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;border-bottom:1px solid var(--border)}
+td{padding:10px 12px;border-bottom:1px solid var(--border-light);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--accent-dim)}
+.contracts-wrap{display:flex;gap:16px;height:calc(100vh - 160px)}
+.contract-list{width:220px;flex-shrink:0;overflow-y:auto;display:flex;flex-direction:column;gap:6px}
+.c-item{background:var(--card);border:1px solid var(--border);border-radius:var(--rs);padding:12px 14px;cursor:pointer;transition:all .15s}
+.c-item:hover,.c-item.active{border-color:var(--accent);background:var(--accent-dim)}
+.c-item-name{font-weight:500;font-size:13px;margin-bottom:3px}
+.c-item-meta{font-size:11px;color:var(--muted);margin-bottom:6px}
+.contract-detail{flex:1;overflow-y:auto}
+.sig-section{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:4px}
+.sig-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);padding:14px}
+.sig-role-label{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;font-weight:600}
+canvas.sig-pad{display:block;width:100%;border:1px dashed var(--border);border-radius:var(--rs);background:#f8f6f1;cursor:crosshair;touch-action:none}
+.sig-img-preview{max-height:64px;border:1px solid var(--border);border-radius:var(--rs);background:#f8f6f1;padding:5px;display:block}
+.sig-timestamp{font-size:10.5px;color:var(--dim);margin-top:5px}
+.contract-body-pre{white-space:pre-wrap;font-family:'Jost',sans-serif;font-size:12.5px;line-height:1.9;color:var(--muted);background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);padding:14px;max-height:240px;overflow-y:auto}
+.contacts-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+.contact-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;cursor:pointer;transition:all .15s;position:relative}
+.contact-card:hover{border-color:var(--accent);transform:translateY(-1px)}
+.contact-name{font-size:14px;font-weight:500;margin-bottom:6px}
+.contact-meta{font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:3px;margin-top:10px}
+.contact-del{position:absolute;top:10px;right:10px;background:none;border:none;color:var(--dim);cursor:pointer;font-size:16px;line-height:1;padding:2px 5px;border-radius:3px;transition:color .15s}
+.contact-del:hover{color:var(--danger)}
+.overlay{display:none;position:fixed;inset:0;background:rgba(8,8,16,.75);backdrop-filter:blur(4px);z-index:1000;align-items:center;justify-content:center;padding:20px}
+.overlay.open{display:flex}
+.modal{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:28px 30px;width:100%;max-width:580px;max-height:90vh;overflow-y:auto;animation:modalIn .2s ease;position:relative}
+.modal-wide{max-width:680px}
+@keyframes modalIn{from{opacity:0;transform:scale(.96) translateY(8px)}to{opacity:1;transform:none}}
+.modal-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px}
+.modal-title{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:400;color:var(--accent)}
+.modal-close{background:none;border:none;color:var(--muted);cursor:pointer;font-size:24px;line-height:1;padding:0 4px;transition:color .15s}
+.modal-close:hover{color:var(--text)}
+.sep{height:1px;background:var(--border);margin:18px 0}
+.tpl-item{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px 20px;margin-bottom:10px}
+.tpl-item-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.tpl-item-name{font-weight:500;font-size:14px}
+.tpl-preview{font-size:11.5px;color:var(--dim);white-space:pre-wrap;max-height:56px;overflow:hidden;font-family:'Jost',sans-serif;line-height:1.6}
+.tag-strip{display:flex;flex-wrap:wrap;gap:5px;background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);padding:10px 12px;margin-bottom:14px}
+.tag-strip code{font-family:monospace;font-size:10.5px;background:var(--accent-dim);color:var(--accent);padding:2px 6px;border-radius:3px;border:1px solid rgba(200,169,110,.2);cursor:pointer;transition:background .12s;user-select:none}
+.tag-strip code:hover{background:var(--accent-mid)}
+.km-status{font-size:12px;margin-top:6px}
+.km-ok{color:var(--success)}
+.km-err{color:var(--danger)}
+/* ── PRIVACY MODE ── */
+.privacy-btn{display:flex;align-items:center;gap:8px;width:calc(100% - 20px);margin:0 10px 10px;padding:9px 12px;border-radius:var(--rs);border:1px solid var(--border);background:transparent;color:var(--muted);font-size:12.5px;font-family:'Jost',sans-serif;cursor:pointer;transition:all .18s;letter-spacing:.02em}
+.privacy-btn:hover{background:var(--warn-dim);border-color:var(--warn);color:var(--warn)}
+.privacy-btn.active{background:var(--warn-dim);border-color:var(--warn);color:var(--warn);font-weight:500}
+.priv-tag{display:inline-block;background:var(--warn-dim);color:var(--warn);border:1px solid rgba(212,146,74,.3);border-radius:3px;padding:0 5px;font-size:11px;letter-spacing:.04em;font-style:normal}
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;height:200px;color:var(--dim);font-size:13px;gap:8px}
+.empty-icon{font-size:36px;opacity:.4}
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--dim)}
+
+/* ── MOBILE HEADER ── */
+.mobile-header{display:none;align-items:center;justify-content:space-between;padding:0 16px;height:56px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:80;flex-shrink:0}
+.mobile-logo{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:300;color:var(--accent);letter-spacing:.08em}
+.hamburger{background:none;border:none;cursor:pointer;padding:8px;display:flex;flex-direction:column;gap:5px;border-radius:var(--rs)}
+.hamburger span{display:block;width:22px;height:2px;background:var(--muted);border-radius:2px;transition:all .25s}
+.hamburger.open span:nth-child(1){transform:translateY(7px) rotate(45deg);background:var(--accent)}
+.hamburger.open span:nth-child(2){opacity:0;transform:scaleX(0)}
+.hamburger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg);background:var(--accent)}
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:89;backdrop-filter:blur(2px)}
+.sidebar-overlay.open{display:block}
+
+/* ── RESPONSIVE BREAKPOINTS ── */
+@media(max-width:768px){
+  html,body{overflow:auto}
+  .app{flex-direction:column;height:auto;min-height:100vh}
+  .mobile-header{display:flex}
+  .sidebar{position:fixed;top:0;left:0;bottom:0;z-index:90;transform:translateX(-100%);transition:transform .28s cubic-bezier(.4,0,.2,1);width:260px;height:100vh}
+  .sidebar.open{transform:translateX(0)}
+  .main{flex:1;overflow-y:auto;overflow-x:hidden;height:auto}
+  .view{padding:20px 16px;min-height:calc(100vh - 56px)}
+  .page-header{flex-direction:column;align-items:flex-start;gap:12px;margin-bottom:20px}
+  .page-title{font-size:26px}
+  .form-row{grid-template-columns:1fr}
+  .stat-grid{grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
+  .contracts-wrap{flex-direction:column;height:auto;gap:12px}
+  .contract-list{width:100%;max-height:220px;flex-direction:row;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;padding-bottom:4px}
+  .c-item{min-width:180px;flex-shrink:0}
+  .contract-detail{min-height:300px}
+  .sig-section{grid-template-columns:1fr}
+  .contacts-grid{grid-template-columns:1fr}
+  .modal{padding:20px 18px;border-radius:12px;max-height:85vh}
+  .modal-wide{max-width:100%}
+  .btn{padding:11px 16px;font-size:13px}
+  .btn-sm{padding:8px 12px;font-size:12px}
+  .btn-row{gap:6px}
+  input[type=text],input[type=email],input[type=number],input[type=date],select,textarea{padding:11px 13px;font-size:15px}
+  canvas.sig-pad{height:160px}
+  .tag-strip code{padding:4px 8px;font-size:11px}
+  table{font-size:12px}
+  th,td{padding:8px 8px}
+  .card{padding:16px}
+  .overlay{padding:12px;align-items:flex-end}
+  .overlay .modal{border-radius:16px 16px 0 0;max-height:92vh;margin:0;width:100%;max-width:100%}
+}
+
+@media(max-width:480px){
+  .view{padding:16px 12px}
+  .stat-grid{grid-template-columns:1fr 1fr}
+  .stat-val{font-size:24px}
+  .page-title{font-size:22px}
+  .btn-row{flex-wrap:wrap}
+  .contract-list{max-height:180px}
+  .c-item{min-width:160px}
+}
+
+/* ── SHOOTING PLANNER ── */
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:20px}
+.cal-head{text-align:center;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);padding:6px 0;font-weight:600}
+.cal-day{min-height:52px;background:var(--card);border:1px solid var(--border);border-radius:var(--rs);padding:5px 6px;cursor:pointer;transition:all .15s;position:relative}
+.cal-day:hover{border-color:var(--accent);background:var(--accent-dim)}
+.cal-day.today{border-color:var(--accent);background:var(--accent-dim)}
+.cal-day.today .cal-dn{color:var(--accent);font-weight:700}
+.cal-day.other-month .cal-dn{color:var(--dim)}
+.cal-day.has-shooting::after{content:'';position:absolute;bottom:5px;right:5px;width:6px;height:6px;border-radius:50%;background:var(--accent)}
+.cal-dn{font-size:12px;font-weight:500;margin-bottom:3px;color:var(--text)}
+.cal-dot{font-size:9px;line-height:1.4;overflow:hidden;max-height:24px}
+.cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.cal-month{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:400;color:var(--text)}
+.shooting-list{display:flex;flex-direction:column;gap:8px}
+.shooting-item{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;display:flex;align-items:center;gap:14px;cursor:pointer;transition:all .15s}
+.shooting-item:hover{border-color:var(--accent)}
+.shooting-date-box{background:var(--accent-dim);border:1px solid rgba(200,169,110,.25);border-radius:var(--rs);padding:8px 10px;text-align:center;min-width:52px;flex-shrink:0}
+.shooting-day{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:400;color:var(--accent);line-height:1}
+.shooting-month{font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-top:2px}
+.shooting-info{flex:1;min-width:0}
+.shooting-title{font-weight:500;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.shooting-meta{font-size:12px;color:var(--muted);margin-top:2px}
+.status-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.status-confirmed{background:var(--success)}
+.status-open{background:var(--warn)}
+.status-cancelled{background:var(--danger)}
+.reminder-badge{font-size:10px;background:var(--info-dim);color:var(--info);border:1px solid rgba(90,159,212,.25);border-radius:10px;padding:1px 7px;white-space:nowrap}
+@media(max-width:768px){
+  .cal-grid{gap:2px}
+  .cal-day{min-height:40px;padding:4px 4px}
+  .cal-dn{font-size:11px}
+  .cal-dot{display:none}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- MOBILE HEADER -->
+<div class="mobile-header">
+  <div class="mobile-logo">TfP</div>
+  <button class="hamburger" id="hamburger" onclick="toggleSidebar()" aria-label="Menü">
+    <span></span><span></span><span></span>
+  </button>
+</div>
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+<aside class="sidebar" id="sidebar">
+  <div class="logo" id="sidebar-logo">
+    <div class="logo-mark">TfP</div>
+    <div class="logo-sub">Vertragsmanager</div>
+  </div>
+  <nav>
+    <button class="nav-item active" onclick="go('dashboard')"><span class="ni">◻</span>Dashboard</button>
+    <button class="nav-item" onclick="go('contracts')"><span class="ni">📄</span>Verträge</button>
+    <button class="nav-item" onclick="go('new-contract')"><span class="ni">✚</span>Neuer Vertrag</button>
+    <button class="nav-item" onclick="go('planung')"><span class="ni">📅</span>Shooting-Planung</button>
+    <div class="nav-sep"></div>
+    <button class="nav-item" onclick="go('contacts')"><span class="ni">👥</span>Kontakte</button>
+    <button class="nav-item" onclick="go('templates')"><span class="ni">📝</span>Vorlagen</button>
+    <button class="nav-item" onclick="go('email-tpl')"><span class="ni">✉</span>E-Mail-Vorlagen</button>
+    <div class="nav-sep"></div>
+    <button class="nav-item" onclick="go('stats')"><span class="ni">📊</span>Km-Statistik</button>
+    <button class="nav-item" onclick="go('settings')"><span class="ni">⚙</span>Profil</button>
+    <div class="nav-sep"></div>
+    <button class="nav-item" onclick="go('impressum')"><span class="ni">§</span>Impressum</button>
+    <div class="nav-sep"></div>
+    <button class="privacy-btn" id="privacy-btn" onclick="togglePrivacy()"><span>🔒</span><span id="privacy-label">Sichtschutz</span></button>
+  </nav>
+  <div class="sidebar-foot">
+    <div id="sb-info" style="margin-bottom:10px">⚠ Profil ausfüllen</div>
+    <div style="display:flex;gap:6px">
+      <button onclick="exportJSON()" title="Alle Daten als Backup-Datei speichern" style="flex:1;padding:6px 0;background:var(--accent-dim);border:1px solid rgba(200,169,110,.3);border-radius:var(--rs);color:var(--accent);font-size:11px;font-family:'Jost',sans-serif;cursor:pointer;font-weight:500;transition:all .15s" onmouseover="this.style.background='var(--accent-mid)'" onmouseout="this.style.background='var(--accent-dim)'">⬇ Export</button>
+      <button onclick="triggerImport()" title="Backup-Datei laden und Daten wiederherstellen" style="flex:1;padding:6px 0;background:transparent;border:1px solid var(--border);border-radius:var(--rs);color:var(--muted);font-size:11px;font-family:'Jost',sans-serif;cursor:pointer;font-weight:500;transition:all .15s" onmouseover="this.style.borderColor='var(--muted)';this.style.color='var(--text)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">⬆ Import</button>
+    </div>
+    <input type="file" id="import-file" accept=".json" style="display:none" onchange="importJSON(event)">
+  </div>
+</aside>
+
+<!-- PRIVACY: handled via masked rendering, no overlay needed -->
+<main class="main">
+
+<div id="v-dashboard" class="view active">
+  <div class="page-header">
+    <div><div class="page-title">Dashboard</div><div class="page-subtitle" id="dash-greeting">Willkommen beim TfP Manager.</div></div>
+    <button class="btn btn-primary" onclick="go('new-contract')">✚ Neuer Vertrag</button>
+  </div>
+  <div id="dash-alert" class="alert-banner" style="display:none">⚠ Bitte Heimatstadt im Profil eintragen – wird für die automatische km-Berechnung benötigt.<button class="btn btn-sm btn-outline" onclick="go('settings')">Zum Profil</button></div>
+  <div class="stat-grid" id="dash-stats"></div>
+  <!-- Anstehende Shootings -->
+  <div id="dash-shootings-wrap" style="margin-bottom:14px;display:none">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div class="card-title" style="margin:0">Anstehende Shootings</div>
+        <button class="btn btn-ghost btn-sm" onclick="go('planung')">Alle anzeigen →</button>
+      </div>
+      <div id="dash-shootings"></div>
+    </div>
+  </div>
+  <div class="card"><div class="card-title">Letzte Verträge</div><table><thead><tr><th>Model</th><th>Shooting</th><th>Location</th><th>Distanz</th><th>Status</th></tr></thead><tbody id="dash-tbody" class="sensitive"></tbody></table></div>
+</div>
+
+<div id="v-contracts" class="view">
+  <div class="page-header"><div><div class="page-title">Verträge</div></div><button class="btn btn-primary btn-sm" onclick="go('new-contract')">✚ Neu</button></div>
+  <div class="contracts-wrap">
+    <div class="contract-list" id="clist"></div>
+    <div class="contract-detail" id="cdetail"><div class="empty-state"><div class="empty-icon">📄</div><span>Vertrag auswählen oder neu erstellen</span></div></div>
+  </div>
+</div>
+
+<div id="v-new-contract" class="view">
+  <div class="page-header"><div><div class="page-title">Neuer Vertrag</div><div class="page-subtitle">Vertrag erstellen, direkt unterschreiben lassen und exportieren</div></div></div>
+  <div class="card">
+    <div class="form-grid">
+      <div class="form-row">
+        <div class="field"><label class="field-label">Vertragsvorlage</label><select id="nc-tpl" onchange="loadTplText()"></select></div>
+        <div class="field"><label class="field-label">Model aus Kontakten (optional)</label><select id="nc-contact" onchange="fillFromContact()"><option value="">– wählen –</option></select></div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label class="field-label">Model Name *</label><input type="text" id="nc-mn" placeholder="Anna Müller"></div>
+        <div class="field"><label class="field-label">Model E-Mail</label><input type="email" id="nc-me" placeholder="anna@beispiel.de"></div>
+      </div>
+      <div class="field"><label class="field-label">Model Adresse</label><input type="text" id="nc-ma"></div>
+      <div class="form-row">
+        <div class="field"><label class="field-label">MUA Name (optional)</label><input type="text" id="nc-muaname"></div>
+        <div class="field"><label class="field-label">MUA E-Mail (optional)</label><input type="email" id="nc-muaemail"></div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label class="field-label">Shooting-Datum</label><input type="date" id="nc-sd"></div>
+        <div class="field"><label class="field-label">Vertragsdatum</label><input type="date" id="nc-cd"></div>
+      </div>
+      <div class="field"><label class="field-label">Shooting-Location</label><input type="text" id="nc-loc" placeholder="z.B. Tempelhofer Feld, Berlin" oninput="resetKm()"></div>
+      <div class="field">
+        <label class="field-label">Entfernung in km</label>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input type="number" id="nc-km" placeholder="wird automatisch berechnet..." style="flex:1">
+          <button class="btn btn-outline" id="km-btn" onclick="autoKm()">📍 Route berechnen</button>
+        </div>
+        <div class="km-status" id="km-msg"></div>
+      </div>
+      <div class="field"><label class="field-label">Vertragstext</label><textarea id="nc-body" rows="10"></textarea></div>
+    </div>
+    <div class="sep"></div>
+    <div class="btn-row" style="justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="go('contracts')">Abbrechen</button>
+      <button class="btn btn-primary" onclick="saveContract()">Vertrag erstellen →</button>
+    </div>
+  </div>
+</div>
+
+<div id="v-contacts" class="view">
+  <div class="page-header"><div><div class="page-title">Kontakte</div></div><button class="btn btn-primary btn-sm" onclick="openContactModal()">+ Neuer Kontakt</button></div>
+  <div id="contacts-grid" class="contacts-grid sensitive"></div>
+</div>
+
+<div id="v-templates" class="view">
+  <div class="page-header"><div><div class="page-title">Vertragsvorlagen</div><div class="page-subtitle">Platzhalter anklicken zum Kopieren</div></div><button class="btn btn-primary btn-sm" onclick="openTplModal()">+ Neue Vorlage</button></div>
+  <div class="tag-strip" id="tag-strip"></div>
+  <div id="tpl-list"></div>
+</div>
+
+<div id="v-email-tpl" class="view">
+  <div class="page-header"><div><div class="page-title">E-Mail-Vorlagen</div></div><button class="btn btn-primary btn-sm" onclick="openEtModal()">+ Neu</button></div>
+  <div id="et-list"></div>
+</div>
+
+<div id="v-stats" class="view">
+  <div class="page-header"><div><div class="page-title">Kilometer-Statistik</div></div></div>
+  <div class="stat-grid" id="stats-tiles"></div>
+  <div class="card card-sm" style="margin-bottom:14px">
+    <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
+      <div class="field" style="width:90px"><label class="field-label">Jahr</label><select id="st-year" onchange="renderStats()"></select></div>
+      <div class="field" style="width:90px"><label class="field-label">km</label><input type="number" id="st-km" placeholder="25"></div>
+      <div class="field"><label class="field-label">Datum</label><input type="date" id="st-date"></div>
+      <div class="field" style="flex:1"><label class="field-label">Location</label><input type="text" id="st-loc"></div>
+      <button class="btn btn-primary btn-sm" onclick="addStatManual()">+ Hinzufügen</button>
+    </div>
+  </div>
+  <div class="card"><table><thead><tr><th>Datum</th><th>Location</th><th style="text-align:right">Einfach (km)</th><th style="text-align:right">Hin &amp; Rückfahrt</th><th></th></tr></thead><tbody id="stats-tbody"></tbody></table></div>
+</div>
+
+<div id="v-settings" class="view">
+  <div class="page-header"><div><div class="page-title">Mein Profil</div><div class="page-subtitle">Wird automatisch in allen Verträgen und PDFs verwendet</div></div></div>
+  <div class="card" style="max-width:500px">
+    <div class="form-grid">
+      <div class="field"><label class="field-label">Vollständiger Name</label><input type="text" id="p-name" placeholder="Max Mustermann"></div>
+      <div class="field"><label class="field-label">Adresse</label><input type="text" id="p-addr" placeholder="Musterstr. 1, 12345 Berlin"></div>
+      <div class="field"><label class="field-label">Heimatstadt (für km-Berechnung)</label><input type="text" id="p-city" placeholder="Berlin"></div>
+      <div class="field"><label class="field-label">E-Mail</label><input type="email" id="p-email" placeholder="foto@beispiel.de"></div>
+      <div class="sep" style="margin:4px 0"></div>
+      <div class="field">
+        <label class="field-label">Logo (wird in Sidebar & PDF angezeigt)</label>
+        <div id="logo-preview-wrap" style="display:none;margin-bottom:10px">
+          <img id="logo-preview" style="max-height:80px;max-width:240px;border:1px solid var(--border);border-radius:var(--rs);padding:8px;background:var(--surface);display:block">
+          <button onclick="removeLogo()" class="btn btn-ghost btn-xs" style="margin-top:8px;color:var(--danger);border-color:var(--danger)">× Logo entfernen</button>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <label style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;padding:8px 14px;background:var(--accent-dim);border:1px solid rgba(200,169,110,.3);border-radius:var(--rs);color:var(--accent);font-size:12.5px;font-weight:500;transition:background .15s" onmouseover="this.style.background='var(--accent-mid)'" onmouseout="this.style.background='var(--accent-dim)'">
+            📁 Logo hochladen
+            <input type="file" id="logo-input" accept="image/*" style="display:none" onchange="handleLogoUpload(event)">
+          </label>
+          <span style="font-size:11.5px;color:var(--dim)">PNG, JPG, SVG – empfohlen max. 400×200px</span>
+        </div>
+      </div>
+    </div>
+    <div class="sep"></div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="saveProfile()">Speichern</button>
+      <span id="p-msg" style="font-size:12.5px;color:var(--success);display:none">✓ Gespeichert</span>
+    </div>
+  </div>
+</div>
+
+<div id="v-impressum" class="view">
+  <div class="page-header"><div><div class="page-title">Impressum</div><div class="page-subtitle">Angaben gemäß § 5 TMG</div></div></div>
+  <div class="card" style="max-width:560px">
+    <div class="card-title">Verantwortlich</div>
+    <div style="display:flex;flex-direction:column;gap:14px;font-size:14px;line-height:1.8">
+      <div>
+        <div style="font-weight:600;font-size:16px;margin-bottom:2px">Alexander Scherer</div>
+        <div style="color:var(--muted)">Fotograf</div>
+      </div>
+      <div class="sep" style="margin:0"></div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <div style="display:flex;gap:12px">
+          <span style="color:var(--dim);min-width:80px;font-size:11px;text-transform:uppercase;letter-spacing:.06em;padding-top:2px">Adresse</span>
+          <span>Mertensstraße 18<br>13587 Berlin</span>
+        </div>
+        <div style="display:flex;gap:12px">
+          <span style="color:var(--dim);min-width:80px;font-size:11px;text-transform:uppercase;letter-spacing:.06em;padding-top:2px">E-Mail</span>
+          <a href="mailto:info@alexander-scherer.com" style="color:var(--accent);text-decoration:none">info@alexander-scherer.com</a>
+        </div>
+      </div>
+      <div class="sep" style="margin:0"></div>
+      <div style="font-size:12.5px;color:var(--muted);line-height:1.9">
+        <strong style="color:var(--text);display:block;margin-bottom:4px">Haftungsausschluss</strong>
+        Die Inhalte dieser Anwendung wurden mit größter Sorgfalt erstellt. Für die Richtigkeit, Vollständigkeit und Aktualität der Inhalte wird keine Gewähr übernommen. Die durch den Betreiber erstellten Inhalte und Werke unterliegen dem deutschen Urheberrecht.
+      </div>
+      <div style="font-size:12.5px;color:var(--muted);line-height:1.9">
+        <strong style="color:var(--text);display:block;margin-bottom:4px">Datenschutz</strong>
+        Diese Anwendung speichert alle Daten ausschließlich lokal in Ihrem Browser (localStorage). Es werden keine personenbezogenen Daten an Dritte übermittelt oder auf externen Servern gespeichert.
+      </div>
+    </div>
+  </div>
+  <div style="max-width:560px;background:var(--warn-dim);border:1px solid rgba(212,146,74,.3);border-radius:var(--r);padding:20px 24px;margin-top:4px">
+    <div style="display:flex;gap:12px;align-items:flex-start">
+      <span style="font-size:22px;flex-shrink:0;margin-top:2px">⚠</span>
+      <div>
+        <strong style="color:var(--warn);font-size:14px;display:block;margin-bottom:8px;letter-spacing:.02em">Rechtlicher Hinweis – Haftungsausschluss Vertragsvorlagen</strong>
+        <p style="font-size:13px;color:var(--muted);line-height:1.9;margin:0 0 10px">
+          Die in dieser Anwendung enthaltenen Vertragsvorlagen wurden <strong style="color:var(--text)">nicht notariell geprüft</strong> und wurden ohne Beteiligung eines Rechtsanwalts erstellt. Sie stellen ausdrücklich <strong style="color:var(--text)">keine Rechtsberatung</strong> dar und erheben keinen Anspruch auf rechtliche Vollständigkeit oder Korrektheit.
+        </p>
+        <p style="font-size:13px;color:var(--muted);line-height:1.9;margin:0">
+          Jede Person, die diese Vorlagen nutzt, ist <strong style="color:var(--text)">eigenständig und allein verantwortlich</strong> für deren Verwendung, rechtliche Wirksamkeit und etwaige Folgen. Der Anbieter übernimmt keinerlei Haftung für Schäden, die durch die Verwendung der bereitgestellten Vorlagen entstehen. Bei rechtlichen Fragen wird ausdrücklich die Konsultation eines zugelassenen Rechtsanwalts empfohlen.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SHOOTING-PLANUNG ══ -->
+<div id="v-planung" class="view">
+  <div class="page-header">
+    <div><div class="page-title">Shooting-Planung</div><div class="page-subtitle">Termine verwalten, Status setzen und Erinnerungen anlegen</div></div>
+    <button class="btn btn-primary" onclick="openShootingModal()">+ Neues Shooting</button>
+  </div>
+
+  <!-- Kalender-Navigation -->
+  <div class="card" style="margin-bottom:14px">
+    <div class="cal-nav">
+      <button class="btn btn-ghost btn-sm" onclick="calPrev()">← Zurück</button>
+      <div class="cal-month" id="cal-month-label"></div>
+      <button class="btn btn-ghost btn-sm" onclick="calNext()">Weiter →</button>
+    </div>
+    <div class="cal-grid">
+      <div class="cal-head">Mo</div><div class="cal-head">Di</div><div class="cal-head">Mi</div>
+      <div class="cal-head">Do</div><div class="cal-head">Fr</div><div class="cal-head">Sa</div><div class="cal-head">So</div>
+    </div>
+    <div class="cal-grid" id="cal-body"></div>
+  </div>
+
+  <!-- Legende -->
+  <div style="display:flex;gap:16px;margin-bottom:16px;flex-wrap:wrap">
+    <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)"><div class="status-dot status-confirmed"></div>Bestätigt</div>
+    <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)"><div class="status-dot status-open"></div>Offen</div>
+    <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)"><div class="status-dot status-cancelled"></div>Abgesagt</div>
+  </div>
+
+  <!-- Liste anstehender Shootings -->
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+    <div style="font-size:12px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;font-weight:600">Anstehende Shootings</div>
+    <select id="plan-filter" onchange="renderPlanung()" style="width:auto;padding:5px 28px 5px 10px;font-size:12px">
+      <option value="all">Alle anzeigen</option>
+      <option value="confirmed">Nur Bestätigt</option>
+      <option value="open">Nur Offen</option>
+      <option value="cancelled">Nur Abgesagt</option>
+    </select>
+  </div>
+  <div id="shooting-list" class="shooting-list"></div>
+</div>
+
+</main>
+</div>
+
+<!-- SHOOTING MODAL -->
+<div class="overlay" id="ov-shooting">
+  <div class="modal">
+    <div class="modal-hdr"><span class="modal-title" id="sm-title">Neues Shooting</span><button class="modal-close" onclick="closeOv('ov-shooting')">×</button></div>
+    <div class="form-grid">
+      <div class="field"><label class="field-label">Model / Titel *</label><input type="text" id="sm-title-input" placeholder="z.B. Anna M. – Outdoor Portrait"></div>
+      <div class="form-row">
+        <div class="field"><label class="field-label">Datum *</label><input type="date" id="sm-date"></div>
+        <div class="field"><label class="field-label">Uhrzeit</label><input type="time" id="sm-time" placeholder="10:00"></div>
+      </div>
+      <div class="field"><label class="field-label">Location</label><input type="text" id="sm-loc" placeholder="z.B. Tempelhofer Feld, Berlin"></div>
+      <div class="form-row">
+        <div class="field"><label class="field-label">Status</label>
+          <select id="sm-status">
+            <option value="open">Offen</option>
+            <option value="confirmed">Bestätigt</option>
+            <option value="cancelled">Abgesagt</option>
+          </select>
+        </div>
+        <div class="field"><label class="field-label">Erinnerung</label>
+          <select id="sm-reminder">
+            <option value="">Keine</option>
+            <option value="1">1 Tag vorher</option>
+            <option value="2">2 Tage vorher</option>
+            <option value="7">1 Woche vorher</option>
+          </select>
+        </div>
+      </div>
+      <div class="field"><label class="field-label">Notizen</label><textarea id="sm-notes" rows="3" placeholder="Equipment, Absprachen, Besonderheiten…"></textarea></div>
+      <div class="field"><label class="field-label">Verknüpfter Vertrag (optional)</label>
+        <select id="sm-contract"><option value="">– keinen –</option></select>
+      </div>
+    </div>
+    <div class="sep"></div>
+    <div class="btn-row" style="justify-content:space-between">
+      <button class="btn btn-danger btn-sm" id="sm-delete-btn" onclick="deleteShooting()" style="display:none">Löschen</button>
+      <div class="btn-row" style="margin-left:auto">
+        <button class="btn btn-ghost btn-sm" id="sm-ical-btn" onclick="exportIcal()" style="display:none" title="Termin in Apple/Google/Outlook Kalender importieren">📅 In Kalender</button>
+        <button class="btn btn-ghost" onclick="closeOv('ov-shooting')">Abbrechen</button>
+        <button class="btn btn-primary" onclick="saveShooting()">Speichern</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DATENSCHUTZ-HINWEIS POPUP -->
+<div class="overlay" id="ov-dsgvo" style="z-index:2000">
+  <div class="modal" style="max-width:520px;text-align:center">
+    <div style="font-size:38px;margin-bottom:14px">🔒</div>
+    <div class="modal-title" style="display:block;margin-bottom:10px;font-size:22px">Hinweise zur Nutzung</div>
+    <p style="font-size:13.5px;color:var(--muted);line-height:1.85;margin-bottom:14px">
+      Diese Anwendung speichert alle eingegebenen Daten <strong style="color:var(--text)">ausschließlich lokal</strong> in Ihrem Browser (<em style="color:var(--accent)">localStorage</em>). Es werden <strong style="color:var(--text)">keine personenbezogenen Daten</strong> an externe Server übertragen oder an Dritte weitergegeben. Eine gesonderte Datenschutzerklärung im Sinne der DSGVO entfällt daher.
+    </p>
+    <div class="sep"></div>
+    <div style="background:var(--warn-dim);border:1px solid rgba(212,146,74,.3);border-radius:var(--rs);padding:14px 16px;margin-bottom:18px;text-align:left">
+      <div style="display:flex;gap:10px;align-items:flex-start">
+        <span style="font-size:18px;flex-shrink:0">⚠</span>
+        <div>
+          <strong style="color:var(--warn);font-size:13px;display:block;margin-bottom:5px">Rechtlicher Hinweis – Haftungsausschluss</strong>
+          <p style="font-size:12.5px;color:var(--muted);line-height:1.8;margin:0">
+            Die in dieser Anwendung bereitgestellten Vertragsvorlagen wurden <strong style="color:var(--text)">nicht notariell geprüft</strong> und stellen <strong style="color:var(--text)">keine Rechtsberatung</strong> dar. Jede Person, die diese Vorlagen verwendet, ist <strong style="color:var(--text)">eigenständig und allein verantwortlich</strong> für deren rechtliche Korrektheit, Vollständigkeit und Wirksamkeit. Bei rechtlichen Fragen wird die Konsultation eines zugelassenen Rechtsanwalts empfohlen.
+          </p>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px;align-items:center">
+      <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="closeDsgvo()">Verstanden &amp; Weiter</button>
+      <span style="font-size:11px;color:var(--dim)">Dieser Hinweis erscheint nur einmalig beim ersten Start.</span>
+    </div>
+  </div>
+</div>
+
+<!-- MODALS -->
+<div class="overlay" id="ov-contact">
+  <div class="modal">
+    <div class="modal-hdr"><span class="modal-title" id="cm-title">Neuer Kontakt</span><button class="modal-close" onclick="closeOv('ov-contact')">×</button></div>
+    <div class="form-grid">
+      <div class="field"><label class="field-label">Name *</label><input type="text" id="cm-name"></div>
+      <div class="form-row">
+        <div class="field"><label class="field-label">Rolle</label><select id="cm-role"><option>Model</option><option>Make-up-Artist</option><option>Stylist</option><option>Assistent</option><option>Sonstiges</option></select></div>
+        <div class="field"><label class="field-label">Telefon</label><input type="text" id="cm-phone"></div>
+      </div>
+      <div class="field"><label class="field-label">E-Mail</label><input type="email" id="cm-email"></div>
+      <div class="field"><label class="field-label">Adresse</label><input type="text" id="cm-addr"></div>
+      <div class="field"><label class="field-label">Notizen</label><textarea id="cm-notes" rows="2"></textarea></div>
+    </div>
+    <div class="sep"></div>
+    <div class="btn-row" style="justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="closeOv('ov-contact')">Abbrechen</button>
+      <button class="btn btn-primary" onclick="saveContact()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="ov-tpl">
+  <div class="modal modal-wide">
+    <div class="modal-hdr"><span class="modal-title" id="tm-title">Neue Vorlage</span><button class="modal-close" onclick="closeOv('ov-tpl')">×</button></div>
+    <div class="form-grid">
+      <div class="field"><label class="field-label">Name *</label><input type="text" id="tm-name"></div>
+      <div class="field">
+        <label class="field-label">Textbausteine – anklicken zum Einfügen</label>
+        <div class="tag-strip" style="margin-bottom:6px">
+          <code onclick="insertPlaceholder('tm-body','{{photographer_name}}')">{{photographer_name}}</code>
+          <code onclick="insertPlaceholder('tm-body','{{photographer_email}}')">{{photographer_email}}</code>
+          <code onclick="insertPlaceholder('tm-body','{{photographer_address}}')">{{photographer_address}}</code>
+          <code onclick="insertPlaceholder('tm-body','{{model_name}}')">{{model_name}}</code>
+          <code onclick="insertPlaceholder('tm-body','{{model_email}}')">{{model_email}}</code>
+          <code onclick="insertPlaceholder('tm-body','{{model_address}}')">{{model_address}}</code>
+          <code onclick="insertPlaceholder('tm-body','{{mua_name}}')">{{mua_name}}</code>
+          <code onclick="insertPlaceholder('tm-body','{{mua_email}}')">{{mua_email}}</code>
+          <code onclick="insertPlaceholder('tm-body','{{shoot_date}}')">{{shoot_date}}</code>
+          <code onclick="insertPlaceholder('tm-body','{{contract_date}}')">{{contract_date}}</code>
+          <code onclick="insertPlaceholder('tm-body','{{location}}')">{{location}}</code>
+          <code onclick="insertPlaceholder('tm-body','{{distance_km}}')">{{distance_km}}</code>
+        </div>
+      </div>
+      <div class="field"><label class="field-label">Vertragstext</label><textarea id="tm-body" rows="14"></textarea></div>
+    </div>
+    <div class="sep"></div>
+    <div class="btn-row" style="justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="closeOv('ov-tpl')">Abbrechen</button>
+      <button class="btn btn-primary" onclick="saveTpl()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="ov-et">
+  <div class="modal modal-wide">
+    <div class="modal-hdr"><span class="modal-title" id="et-title">Neue E-Mail-Vorlage</span><button class="modal-close" onclick="closeOv('ov-et')">×</button></div>
+    <div class="form-grid">
+      <div class="field"><label class="field-label">Name *</label><input type="text" id="et-name"></div>
+      <div class="field">
+        <label class="field-label">Textbausteine – anklicken zum Einfügen</label>
+        <div class="tag-strip" style="margin-bottom:6px">
+          <code onclick="insertPlaceholder('et-subj','{{photographer_name}}','et-body')">{{photographer_name}}</code>
+          <code onclick="insertPlaceholder('et-subj','{{photographer_email}}','et-body')">{{photographer_email}}</code>
+          <code onclick="insertPlaceholder('et-subj','{{model_name}}','et-body')">{{model_name}}</code>
+          <code onclick="insertPlaceholder('et-subj','{{model_email}}','et-body')">{{model_email}}</code>
+          <code onclick="insertPlaceholder('et-subj','{{mua_name}}','et-body')">{{mua_name}}</code>
+          <code onclick="insertPlaceholder('et-subj','{{shoot_date}}','et-body')">{{shoot_date}}</code>
+          <code onclick="insertPlaceholder('et-subj','{{contract_date}}','et-body')">{{contract_date}}</code>
+          <code onclick="insertPlaceholder('et-subj','{{location}}','et-body')">{{location}}</code>
+          <code onclick="insertPlaceholder('et-subj','{{distance_km}}','et-body')">{{distance_km}}</code>
+        </div>
+      </div>
+      <div class="field"><label class="field-label">Betreff</label><input type="text" id="et-subj"></div>
+      <div class="field"><label class="field-label">Nachricht</label><textarea id="et-body" rows="11"></textarea></div>
+    </div>
+    <div class="sep"></div>
+    <div class="btn-row" style="justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="closeOv('ov-et')">Abbrechen</button>
+      <button class="btn btn-primary" onclick="saveEt()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="ov-email-send">
+  <div class="modal modal-wide">
+    <div class="modal-hdr"><span class="modal-title">Vertrag per E-Mail versenden</span><button class="modal-close" onclick="closeOv('ov-email-send')">×</button></div>
+    <div class="form-grid">
+      <div class="field"><label class="field-label">Vorlage</label><select id="es-tpl" onchange="applyEmailTpl()"></select></div>
+      <div class="field"><label class="field-label">An (E-Mail)</label><input type="email" id="es-to"></div>
+      <div class="field"><label class="field-label">Betreff</label><input type="text" id="es-subj"></div>
+      <div class="field"><label class="field-label">Nachricht</label><textarea id="es-body" rows="10"></textarea></div>
+      <p style="font-size:12px;color:var(--muted)">💡 PDF vorher exportieren und manuell an die E-Mail anhängen.</p>
+    </div>
+    <div class="sep"></div>
+    <div class="btn-row" style="justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="closeOv('ov-email-send')">Abbrechen</button>
+      <button class="btn btn-primary" onclick="doSendEmail()">E-Mail-App öffnen →</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="ov-sig">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-hdr"><span class="modal-title" id="sig-title">Unterschrift</span><button class="modal-close" onclick="closeOv('ov-sig')">×</button></div>
+    <p style="font-size:12.5px;color:var(--muted);margin-bottom:14px" id="sig-sub">Bitte mit Maus oder Finger unterschreiben:</p>
+    <canvas id="sig-canvas" class="sig-pad" height="160"></canvas>
+    <div class="btn-row" style="margin-top:12px">
+      <button class="btn btn-ghost btn-sm" onclick="clearSig()">Löschen</button>
+      <button class="btn btn-primary btn-sm" onclick="confirmSig()">Unterschrift übernehmen</button>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+const uid=()=>Math.random().toString(36).slice(2,9);
+const toDay=()=>new Date().toISOString().split('T')[0];
+const fmtDate=d=>{if(!d)return'–';try{return new Date(d).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'})}catch{return d}};
+
+const TPL1=`VERTRAG ZUR GEGENSEITIGEN NUTZUNG VON BILDMATERIAL (TfP)\n\nZwischen:\nFotograf/in: {{photographer_name}}\nAdresse:     {{photographer_address}}\nE-Mail:      {{photographer_email}}\n\nund\n\nModel:       {{model_name}}\nAdresse:     {{model_address}}\nE-Mail:      {{model_email}}\n\n§ 1 – Gegenstand des Vertrages\nDie Vertragsparteien vereinbaren ein TfP-Shooting am {{shoot_date}} an folgendem Ort: {{location}}.\n\n§ 2 – Leistungen des Fotografen\nDer Fotograf stellt dem Model eine vereinbarte Anzahl bearbeiteter Bilder zur Verfügung.\n\n§ 3 – Nutzungsrechte\nBeide Parteien erhalten das Recht, die Bilder für nicht-kommerzielle Zwecke zu nutzen (Portfolio, Social Media). Kommerzielle Nutzung bedarf der schriftlichen Zustimmung beider Parteien.\n\n§ 4 – Bildbearbeitung\nJegliche nachträgliche Bearbeitung, Veränderung oder Verfremdung der gelieferten Bilder durch das Model ist ausdrücklich untersagt. Dies umfasst insbesondere das Hinzufügen von Filtern, das Zuschneiden in einer den Bildinhalt verfälschenden Weise, das Überlagern mit Texten oder Grafiken sowie die Nutzung von KI-basierten Bildbearbeitungstools. Ausgenommen sind plattformübliche, nicht-destruktive Anpassungen (z. B. Helligkeit/Kontrast im Rahmen von Social-Media-Uploads), sofern der Gesamteindruck des Bildes erhalten bleibt.\n\n§ 5 – Wasserzeichen\nDas Model ist nicht berechtigt, eigene Wasserzeichen, Logos, Social-Media-Handles oder sonstige Kennzeichnungen auf den gelieferten Bildern anzubringen. Die Bilder dürfen ausschließlich in der vom Fotografen gelieferten Form verwendet werden. Ausnahmen bedürfen der ausdrücklichen schriftlichen Zustimmung des Fotografen.\n\n§ 6 – Vergütung\nEs erfolgt keine finanzielle Vergütung. Das Model erhält bearbeitete Fotos.\n\n§ 7 – Fahrtkostenregelung\nFahrtkosten trägt jede Partei selbst. Entfernung Fotograf→Location: {{distance_km}} km.\n\n§ 8 – Rücktritt\nRücktritt ist bis 48h vor dem Shooting kostenlos möglich.\n\n§ 9 – Datenschutz\nPersonenbezogene Daten werden nur zur Vertragsabwicklung verwendet.\n\nOrt, Datum: {{location}}, {{contract_date}}`;
+
+const TPL2=`ERWEITERTER TFP-VERTRAG MIT MAKE-UP-ARTIST\n\nFotograf/in:    {{photographer_name}} | {{photographer_email}}\nModel:          {{model_name}} | {{model_email}}\nMake-up-Artist: {{mua_name}} | {{mua_email}}\n\nShooting-Datum: {{shoot_date}}\nLocation:       {{location}}\nEntfernung (Fotograf → Location): {{distance_km}} km\n\n§ 1 – Projektbeschreibung\nAlle Beteiligten arbeiten auf TfP-Basis und erhalten bearbeitete Bilder zur nicht-kommerziellen Nutzung.\n\n§ 2 – Leistungsumfang\n- Fotograf: Shooting, Bildbearbeitung, Bereitstellung vereinbarter Fotos\n- Model: Pünktliches Erscheinen, Mitwirkung gemäß Absprache\n- Make-up-Artist: Make-up und Haarstyling\n\n§ 3 – Nutzungsrechte\nNicht-kommerzielle Nutzung für alle Parteien. Namensnennung erwünscht.\n\n§ 4 – Bildbearbeitung\nJegliche nachträgliche Bearbeitung, Veränderung oder Verfremdung der gelieferten Bilder durch das Model oder den Make-up-Artist ist ausdrücklich untersagt. Dies umfasst insbesondere das Hinzufügen von Filtern, das Zuschneiden in einer den Bildinhalt verfälschenden Weise, das Überlagern mit Texten oder Grafiken sowie die Nutzung von KI-basierten Bildbearbeitungstools. Ausgenommen sind plattformübliche, nicht-destruktive Anpassungen (z. B. Helligkeit/Kontrast im Rahmen von Social-Media-Uploads), sofern der Gesamteindruck des Bildes erhalten bleibt.\n\n§ 5 – Wasserzeichen\nDas Model ist nicht berechtigt, eigene Wasserzeichen, Logos, Social-Media-Handles oder sonstige Kennzeichnungen auf den gelieferten Bildern anzubringen. Die Bilder dürfen ausschließlich in der vom Fotografen gelieferten Form verwendet werden. Ausnahmen bedürfen der ausdrücklichen schriftlichen Zustimmung des Fotografen.\n\n§ 6 – Haftung\nFür Sach- und Personenschäden haftet jede Partei selbst.\n\nOrt, Datum: {{location}}, {{contract_date}}`;
+
+const TPL3=`TFP-VERTRAG MIT KOMMERZIELLER NUTZUNG – ONLYFANS\n\nZwischen:\nFotograf/in: {{photographer_name}}\nAdresse:     {{photographer_address}}\nE-Mail:      {{photographer_email}}\n\nund\n\nModel:       {{model_name}}\nAdresse:     {{model_address}}\nE-Mail:      {{model_email}}\n\nShooting-Datum: {{shoot_date}}\nLocation:       {{location}}\nEntfernung (Fotograf → Location): {{distance_km}} km\n\nPRÄAMBEL\nDie Vertragsparteien vereinbaren ein Shooting auf TfP-Basis (Time for Pictures) mit dem ausdrücklichen Zweck der kommerziellen Verwertung der entstandenen Bildmaterialien auf der Plattform OnlyFans. Beide Parteien sind gleichberechtigte Partner und profitieren gemeinsam von den Einnahmen.\n\n§ 1 – Gegenstand des Vertrages\nDer Fotograf erstellt am {{shoot_date}} an der Location {{location}} professionelle Bildmaterialien (Fotos) gemeinsam mit dem Model. Die Materialien sind ausdrücklich für die Veröffentlichung auf OnlyFans (onlyfans.com) bestimmt.\n\n§ 2 – Leistungen des Fotografen\n- Professionelle Fotografie und Bildbearbeitung\n- Bereitstellung aller bearbeiteten Bilder in druckfähiger Auflösung\n- Keine gesonderte Vergütung für die fotografische Leistung\n\n§ 3 – Leistungen des Models\n- Mitwirkung am Shooting gemäß gemeinsamer Absprache\n- Eigenverantwortliche Verwaltung und Veröffentlichung auf dem eigenen OnlyFans-Kanal\n- Keine gesonderte Vergütung für die Model-Leistung\n\n§ 4 – Nutzungsrechte\nBeide Parteien erhalten ein einfaches, nicht exklusives Nutzungsrecht an den entstandenen Bildern für folgende Zwecke:\n- Veröffentlichung auf OnlyFans (kostenpflichtig oder kostenlos)\n- Bewerbung der eigenen OnlyFans-Präsenz auf anderen Social-Media-Plattformen\n- Portfolio- und Eigenwerbungszwecke\n\nEine Weiterlizenzierung der Bilder an Dritte bedarf der ausdrücklichen schriftlichen Zustimmung beider Parteien.\n\n§ 5 – Einnahmenteilung OnlyFans\nDie durch die veröffentlichten Inhalte auf OnlyFans erzielten Einnahmen werden wie folgt aufgeteilt:\n- Model: 70 % der Netto-Einnahmen aus dem eigenen Kanal\n- Fotograf: 30 % der Netto-Einnahmen, zahlbar monatlich bis zum 10. des Folgemonats\n\nAls Nachweis legt das Model dem Fotografen auf Verlangen monatliche Abrechnungen der OnlyFans-Plattform vor. Beide Parteien verpflichten sich zu einer transparenten und ehrlichen Abrechnung.\n\n§ 6 – Namensnennung und Verlinkung\nBei Veröffentlichungen wird der Fotograf nach Möglichkeit namentlich genannt oder verlinkt. Das Model kann auf die Namensnennung des Fotografen verzichten, sofern dies ausdrücklich vereinbart wurde.\n\n§ 7 – Content-Richtlinien und Verantwortung\nDas Model trägt die alleinige Verantwortung für die Einhaltung der Nutzungsbedingungen von OnlyFans sowie aller geltenden gesetzlichen Vorschriften bei der Veröffentlichung der Inhalte. Der Fotograf haftet nicht für Verstöße gegen Plattformrichtlinien durch das Model.\n\n§ 8 – Altersprüfung\nDas Model versichert hiermit ausdrücklich, zum Zeitpunkt des Shootings das 18. Lebensjahr vollendet zu haben und legt auf Verlangen einen gültigen Lichtbildausweis vor.\n\n§ 9 – Vertragsdauer und Kündigung\nDieser Vertrag gilt unbefristet für die im Rahmen dieses Shootings entstandenen Materialien. Eine Kündigung der Nutzungsrechte ist mit einer Frist von 30 Tagen schriftlich möglich. Bereits veröffentlichte Inhalte können hiervon ausgenommen sein.\n\n§ 10 – Fahrtkostenregelung\nFahrtkosten trägt jede Partei selbst.\n\n§ 11 – Wasserzeichen\nDas Model ist nicht berechtigt, eigene Wasserzeichen, Logos, Social-Media-Handles oder sonstige Kennzeichnungen auf den gelieferten Bildern anzubringen. Die Bilder dürfen ausschließlich in der vom Fotografen gelieferten Form verwendet werden. Ausnahmen bedürfen der ausdrücklichen schriftlichen Zustimmung des Fotografen.\n\n§ 12 – Bildbearbeitung\nJegliche nachträgliche Bearbeitung, Veränderung oder Verfremdung der gelieferten Bilder durch das Model ist ausdrücklich untersagt. Dies umfasst insbesondere das Hinzufügen von Filtern, das Zuschneiden in einer den Bildinhalt verfälschenden Weise, das Überlagern mit Texten oder Grafiken sowie die Nutzung von KI-basierten Bildbearbeitungstools. Ausgenommen sind plattformübliche, nicht-destruktive Anpassungen (z. B. Helligkeit/Kontrast), sofern der Gesamteindruck des Bildes erhalten bleibt.\n\n§ 14 – Salvatorische Klausel\nSollten einzelne Bestimmungen dieses Vertrages unwirksam sein, bleibt die Wirksamkeit der übrigen Bestimmungen unberührt.\n\nOrt, Datum: {{location}}, {{contract_date}}`;
+
+const TPL4=`TFP-VERTRAG MIT KOMMERZIELLER NUTZUNG – PATREON\n\nZwischen:\nFotograf/in: {{photographer_name}}\nAdresse:     {{photographer_address}}\nE-Mail:      {{photographer_email}}\n\nund\n\nModel:       {{model_name}}\nAdresse:     {{model_address}}\nE-Mail:      {{model_email}}\n\nShooting-Datum: {{shoot_date}}\nLocation:       {{location}}\nEntfernung (Fotograf → Location): {{distance_km}} km\n\nPRÄAMBEL\nDie Vertragsparteien vereinbaren ein Shooting auf TfP-Basis (Time for Pictures) mit dem ausdrücklichen Zweck der kommerziellen Verwertung der entstandenen Bildmaterialien auf der Plattform Patreon. Beide Parteien profitieren gleichberechtigt von den erzielten Einnahmen.\n\n§ 1 – Gegenstand des Vertrages\nDer Fotograf erstellt am {{shoot_date}} an der Location {{location}} professionelle Bildmaterialien gemeinsam mit dem Model. Die Materialien sind zur Veröffentlichung auf Patreon (patreon.com) als exklusiver Creator-Content bestimmt.\n\n§ 2 – Leistungen des Fotografen\n- Professionelle Fotografie, Bildbearbeitung und Bereitstellung aller Bilder\n- Ggf. Unterstützung bei der inhaltlichen Konzeption der Patreon-Posts\n- Keine gesonderte Vergütung für die fotografische Leistung\n\n§ 3 – Leistungen des Models\n- Mitwirkung am Shooting gemäß gemeinsamer Absprache\n- Eigenverantwortliche Verwaltung und Pflege des Patreon-Kanals\n- Regelmäßige Veröffentlichung der Inhalte für Abonnenten\n- Keine gesonderte Vergütung für die Model-Leistung\n\n§ 4 – Nutzungsrechte\nBeide Parteien erhalten ein einfaches, nicht exklusives Nutzungsrecht an den entstandenen Bildern für folgende Zwecke:\n- Veröffentlichung auf Patreon als Abonnenten-exklusiver Inhalt (Tier-Inhalte)\n- Bewerbung des Patreon-Kanals auf anderen Social-Media-Plattformen\n- Portfolio- und Eigenwerbungszwecke\n\nEine Weiterlizenzierung an Dritte bedarf der schriftlichen Zustimmung beider Parteien.\n\n§ 5 – Einnahmenteilung Patreon\nDie durch Patreon-Abonnements erzielten Einnahmen, die auf die im Rahmen dieses Vertrages entstandenen Inhalte entfallen, werden wie folgt aufgeteilt:\n- Model: 65 % der auf diese Inhalte entfallenden Netto-Einnahmen\n- Fotograf: 35 % der auf diese Inhalte entfallenden Netto-Einnahmen\n\nDie Abrechnung erfolgt monatlich. Das Model legt dem Fotografen auf Verlangen entsprechende Patreon-Auswertungen vor. Beide Parteien verpflichten sich zur transparenten Abrechnung.\n\n§ 6 – Exklusivität\nDie im Rahmen dieses Vertrages erstellten Inhalte dürfen zunächst 30 Tage exklusiv auf Patreon veröffentlicht werden, bevor eine anderweitige Nutzung erfolgt, sofern nicht schriftlich anders vereinbart.\n\n§ 7 – Namensnennung und Creator-Profil\nDer Fotograf wird in den jeweiligen Patreon-Posts als Fotograf genannt. Eine Verlinkung auf das Portfolio oder Social-Media-Profil des Fotografen ist erwünscht und wird nach Möglichkeit umgesetzt.\n\n§ 8 – Verantwortung und Plattformrichtlinien\nDas Model trägt die alleinige Verantwortung für die Einhaltung der Patreon-Nutzungsbedingungen sowie aller gesetzlichen Vorschriften. Der Fotograf haftet nicht für Richtlinienverstöße durch das Model.\n\n§ 9 – Altersprüfung\nDas Model versichert ausdrücklich, zum Zeitpunkt des Shootings das 18. Lebensjahr vollendet zu haben und legt auf Verlangen einen gültigen Lichtbildausweis vor.\n\n§ 10 – Vertragsdauer und Kündigung\nDieser Vertrag gilt unbefristet für die im Rahmen dieses Shootings entstandenen Materialien. Eine Kündigung der Nutzungsrechte ist mit 30 Tagen Frist schriftlich möglich.\n\n§ 11 – Wasserzeichen\nDas Model ist nicht berechtigt, eigene Wasserzeichen, Logos, Social-Media-Handles oder sonstige Kennzeichnungen auf den gelieferten Bildern anzubringen. Die Bilder dürfen ausschließlich in der vom Fotografen gelieferten Form verwendet werden. Ausnahmen bedürfen der ausdrücklichen schriftlichen Zustimmung des Fotografen.\n\n§ 12 – Fahrtkostenregelung\nFahrtkosten trägt jede Partei selbst.\n\n§ 14 – Salvatorische Klausel\nSollten einzelne Bestimmungen dieses Vertrages unwirksam sein, bleibt die Wirksamkeit der übrigen Bestimmungen unberührt.\n\nOrt, Datum: {{location}}, {{contract_date}}`;
+
+const PLACEHOLDERS=['{{photographer_name}}','{{photographer_email}}','{{photographer_address}}','{{model_name}}','{{model_email}}','{{model_address}}','{{mua_name}}','{{mua_email}}','{{shoot_date}}','{{contract_date}}','{{location}}','{{distance_km}}'];
+
+function defaultDB(){return{photographer:{name:'',address:'',email:'',homeCity:''},contacts:[],contracts:[],shootings:[],templates:[{id:'t1',name:'Standard TfP-Vertrag',body:TPL1},{id:'t2',name:'Erweiterter TfP-Vertrag (inkl. MUA)',body:TPL2},{id:'t3',name:'TfP kommerziell – OnlyFans',body:TPL3},{id:'t4',name:'TfP kommerziell – Patreon',body:TPL4}],emailTemplates:[{id:'e1',name:'Versand mit Vertrag',subject:'TfP-Vertrag für unser Shooting am {{shoot_date}}',body:'Hallo {{model_name}},\n\nvielen Dank für dein Interesse an unserem gemeinsamen Shooting!\n\nAnbei der TfP-Vertrag für das Shooting am {{shoot_date}} an der Location: {{location}}.\n\nBitte unterschreibe ihn digital und sende ihn zurück.\n\nHerzliche Grüße,\n{{photographer_name}}\n{{photographer_email}}'},{id:'e2',name:'Erinnerung / Follow-Up',subject:'Erinnerung: TfP-Vertrag noch ausstehend',body:'Hallo {{model_name}},\n\nkurze Erinnerung: Der TfP-Vertrag für das Shooting am {{shoot_date}} ist noch nicht vollständig unterzeichnet.\n\nBitte bis 48h vorher zurücksenden.\n\nHerzliche Grüße,\n{{photographer_name}}'}],stats:[]}}
+
+let DB;
+try{const r=localStorage.getItem('tfp_v3');DB=r?JSON.parse(r):defaultDB();if(!DB.templates||!DB.templates.length)DB.templates=defaultDB().templates;if(!DB.emailTemplates||!DB.emailTemplates.length)DB.emailTemplates=defaultDB().emailTemplates;if(!DB.shootings)DB.shootings=[];
+// Neue Standard-Vorlagen nachträglich hinzufügen falls noch nicht vorhanden
+// Vorhandene Default-Vorlagen immer mit aktuellem Inhalt überschreiben
+[{id:'t1',name:'Standard TfP-Vertrag',body:TPL1},{id:'t2',name:'Erweiterter TfP-Vertrag (inkl. MUA)',body:TPL2},{id:'t3',name:'TfP kommerziell – OnlyFans',body:TPL3},{id:'t4',name:'TfP kommerziell – Patreon',body:TPL4}].forEach(t=>{
+  const idx=DB.templates.findIndex(x=>x.id===t.id);
+  if(idx===-1)DB.templates.push(t);else DB.templates[idx].body=t.body;
+});
+}catch(e){DB=defaultDB();}
+// Migration: link existing stats to their contracts by matching date + location + km
+(function migrateStats(){
+  DB.stats.forEach(s=>{
+    if(s.contractId)return;
+    const match=DB.contracts.find(c=>c.shootDate===s.date&&c.location===s.location&&Number(c.distanceKm)===Number(s.km));
+    if(match)s.contractId=match.id;
+  });
+  try{localStorage.setItem('tfp_v3',JSON.stringify(DB));}catch(e){}
+})();
+function persist(){try{localStorage.setItem('tfp_v3',JSON.stringify(DB));}catch(e){}}
+
+function fill(text,c,p){
+  if(!text)return'';p=p||DB.photographer;c=c||{};
+  return text.replace(/{{photographer_name}}/g,p.name||'').replace(/{{photographer_email}}/g,p.email||'').replace(/{{photographer_address}}/g,p.address||'').replace(/{{model_name}}/g,c.modelName||'').replace(/{{model_email}}/g,c.modelEmail||'').replace(/{{model_address}}/g,c.modelAddress||'').replace(/{{mua_name}}/g,c.muaName||'').replace(/{{mua_email}}/g,c.muaEmail||'').replace(/{{shoot_date}}/g,fmtDate(c.shootDate)).replace(/{{contract_date}}/g,fmtDate(c.contractDate)).replace(/{{location}}/g,c.location||'').replace(/{{distance_km}}/g,(c.distanceKm!=null&&c.distanceKm!=='')?(c.distanceKm):'–');
+}
+
+const RENDERS={dashboard:renderDashboard,contracts:renderContracts,'new-contract':initNewContract,contacts:renderContacts,templates:renderTemplates,'email-tpl':renderEmailTpls,stats:renderStats,settings:initSettings,impressum:()=>{},planung:renderPlanung};
+function go(id){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('v-'+id).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(b=>b.classList.toggle('active',b.getAttribute('onclick').includes("'"+id+"'")));
+  if(RENDERS[id])RENDERS[id]();
+  // Auf Mobile: Sidebar nach Navigation schließen
+  if(window.innerWidth<=768) closeSidebar();
+  // Scroll to top
+  document.querySelector('.main').scrollTo(0,0);
+}
+
+function renderDashboard(){
+  const p=DB.photographer;const yr=new Date().getFullYear();
+  const kmYr=DB.stats.filter(r=>r.year==yr).reduce((s,r)=>s+(+r.km||0),0);
+  const kmAll=DB.stats.reduce((s,r)=>s+(+r.km||0),0);
+  const full=DB.contracts.filter(c=>c.sigP&&c.sigM).length;
+  const half=DB.contracts.filter(c=>(c.sigP||c.sigM)&&!(c.sigP&&c.sigM)).length;
+  const open=DB.contracts.filter(c=>!c.sigP&&!c.sigM).length;
+  document.getElementById('dash-greeting').textContent=p.name?`Willkommen zurück, ${p.name.split(' ')[0]}.`:'Willkommen beim TfP Manager.';
+  document.getElementById('dash-alert').style.display=p.homeCity?'none':'flex';
+  document.getElementById('sb-info').textContent=p.name?'👤 '+p.name:'⚠ Profil ausfüllen';
+  document.getElementById('dash-stats').innerHTML=[{v:DB.contracts.length,l:'Verträge gesamt'},{v:full,l:'Vollständig signiert'},{v:half,l:'Teilweise signiert'},{v:open,l:'Noch offen'},{v:kmYr+' km',l:'Kilometer '+yr},{v:kmAll+' km',l:'Kilometer gesamt'}].map(t=>`<div class="stat-tile"><div class="stat-val">${t.v}</div><div class="stat-lbl">${t.l}</div></div>`).join('');
+  const rows=[...DB.contracts].reverse().slice(0,8).map(c=>{const done=c.sigP&&c.sigM,h=(c.sigP||c.sigM)&&!done;const badge=done?'<span class="badge badge-ok">Vollständig</span>':h?'<span class="badge badge-warn">Teilweise</span>':'<span class="badge badge-err">Offen</span>';return`<tr onclick="openCfromDash('${c.id}')" style="cursor:pointer"><td><strong>${pTag(maskName(c.modelName||'–'))}</strong></td><td>${fmtDate(c.shootDate)}</td><td>${pTag(maskAddr(c.location||'–'))}</td><td>${c.distanceKm!=null?c.distanceKm+' km':'–'}</td><td>${badge}</td></tr>`;}).join('');
+  document.getElementById('dash-tbody').innerHTML=rows||'<tr><td colspan="5" style="color:var(--dim);text-align:center;padding:20px">Noch keine Verträge erstellt.</td></tr>';
+  // Anstehende Shootings
+  if(!DB.shootings) DB.shootings=[];
+  const today=new Date();today.setHours(0,0,0,0);
+  const upcoming=(DB.shootings||[]).filter(s=>s.status!=='cancelled'&&new Date(s.date)>=today).sort((a,b)=>a.date.localeCompare(b.date)).slice(0,3);
+  const wrap=document.getElementById('dash-shootings-wrap');
+  if(upcoming.length){
+    wrap.style.display='block';
+    document.getElementById('dash-shootings').innerHTML=upcoming.map(function(s){
+      const d=new Date(s.date);const daysUntil=Math.round((d-today)/86400000);
+      const urgency=daysUntil===0?'<span class="badge badge-err">Heute</span>':daysUntil===1?'<span class="badge badge-warn">Morgen</span>':daysUntil<=7?'<span class="badge badge-warn">in '+daysUntil+' Tagen</span>':'';
+      const sc=STATUS_CLASS[s.status]||'status-open';
+      return '<div class="shooting-item" onclick="go(\'planung\')" style="margin-bottom:6px">'
+        +'<div class="shooting-date-box"><div class="shooting-day">'+d.getDate()+'</div><div class="shooting-month">'+MONTHS_DE[d.getMonth()].slice(0,3)+'</div></div>'
+        +'<div class="shooting-info"><div class="shooting-title">'+pTag(maskName(s.title||'Shooting'))+'</div>'
+        +'<div class="shooting-meta">'+(s.time?s.time+' · ':'')+pTag(maskAddr(s.location||'Kein Ort'))+' '+urgency+'</div></div>'
+        +'<div class="status-dot '+sc+'"></div>'
+        +'</div>';
+    }).join('');
+  } else { wrap.style.display='none'; }
+  checkReminders();
+}
+function openCfromDash(id){activeContractId=id;go('contracts');}
+
+let activeContractId=null;
+function renderContracts(){
+  const list=document.getElementById('clist');
+  if(!DB.contracts.length){list.innerHTML='<div class="empty-state"><div class="empty-icon">📄</div><span>Noch keine Verträge</span></div>';document.getElementById('cdetail').innerHTML='<div class="empty-state"><div class="empty-icon">📄</div><span>Vertrag auswählen oder neu erstellen</span></div>';return;}
+  list.innerHTML=[...DB.contracts].reverse().map(c=>{const done=c.sigP&&c.sigM,h=(c.sigP||c.sigM)&&!done;const badge=done?'<span class="badge badge-ok">Vollständig</span>':h?'<span class="badge badge-warn">Teilweise</span>':'<span class="badge badge-err">Offen</span>';return`<div class="c-item${activeContractId===c.id?' active':''}" onclick="selectC('${c.id}',this)"><div class="c-item-name">${pTag(maskName(c.modelName||'Kein Name'))}</div><div class="c-item-meta">${fmtDate(c.shootDate)} · ${pTag(maskAddr(c.location||'–'))}</div>${badge}</div>`;}).join('');
+  if(activeContractId){const c=DB.contracts.find(x=>x.id===activeContractId);if(c)renderCDetail(c);}
+}
+function selectC(id,el){
+  activeContractId=id;
+  document.querySelectorAll('.c-item').forEach(x=>x.classList.remove('active'));
+  if(el)el.classList.add('active');
+  const c=DB.contracts.find(x=>x.id===id);if(c)renderCDetail(c);
+}
+function renderCDetail(c){
+  const p=DB.photographer;const done=c.sigP&&c.sigM;
+  const sigH=(who,sig,name,at)=>{
+    const label=who==='p'?`Fotograf/in · ${p.name||'–'}`:`Model · ${pTag(maskName(c.modelName||'–'))}`;
+    const btnL=who==='p'?'✍ Fotograf unterschreiben':'✍ Model unterschreiben';
+    if(sig)return`<div class="sig-box"><div class="sig-role-label">${label}</div><img src="${sig}" class="sig-img-preview" alt="sig"><div class="sig-timestamp">${new Date(at).toLocaleString('de-DE')}</div><button class="btn btn-ghost btn-xs" style="margin-top:8px" onclick="openSigModal('${who}','${c.id}')">Neu unterschreiben</button></div>`;
+    return`<div class="sig-box"><div class="sig-role-label">${label}</div><button class="btn btn-outline btn-sm" style="width:100%;margin-top:8px" onclick="openSigModal('${who}','${c.id}')">${btnL}</button></div>`;
+  };
+  document.getElementById('cdetail').innerHTML=`
+    <div class="btn-row" style="margin-bottom:14px">
+      <button class="btn btn-outline btn-sm" onclick="exportPDF('${c.id}')">📄 PDF öffnen / Drucken</button>
+      <button class="btn btn-sm" onclick="openEmailSend('${c.id}')">✉ E-Mail senden</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteC('${c.id}')">Löschen</button>
+    </div>
+    <div class="card">
+      <div class="form-row" style="font-size:13px;margin-bottom:14px;gap:8px">
+        <div><span style="color:var(--muted)">Model:</span> <strong>${pTag(maskName(c.modelName||'–'))}</strong></div>
+        <div><span style="color:var(--muted)">Shooting:</span> ${fmtDate(c.shootDate)}</div>
+        <div><span style="color:var(--muted)">Location:</span> ${pTag(maskAddr(c.location||'–'))}</div>
+        <div><span style="color:var(--muted)">Distanz:</span> ${c.distanceKm!=null?c.distanceKm+' km':'–'}</div>
+      </div>
+      <pre class="contract-body-pre">${fill(c.contractBody,c,p)}</pre>
+    </div>
+    <div class="card">
+      <div class="card-title">Unterschriften</div>
+      <div class="sig-section">
+        ${sigH('p',c.sigP,p.name,c.sigPAt)}
+        ${sigH('m',c.sigM,c.modelName,c.sigMAt)}
+      </div>
+      ${done?'<div style="margin-top:14px"><span class="badge badge-ok">✓ Vollständig unterzeichnet – bereit für PDF-Export</span></div>':''}
+    </div>`;
+}
+function deleteC(id){if(!confirm('Vertrag wirklich löschen?'))return;DB.contracts=DB.contracts.filter(c=>c.id!==id);DB.stats=DB.stats.filter(s=>s.contractId!==id);if(activeContractId===id)activeContractId=null;persist();renderContracts();}
+
+function exportPDF(id){
+  const c=DB.contracts.find(x=>x.id===id);const p=DB.photographer;const body=fill(c.contractBody,c,p);
+  const sigB=(label,sig,name,at)=>sig?`<div class="sw"><p class="sl">${label}</p><img src="${sig}" class="si"><p class="sn">${name||''}</p><p class="sd">Unterzeichnet: ${new Date(at).toLocaleString('de-DE')}</p></div>`:`<div class="sw"><p class="sl">${label}</p><div class="sline"></div><p class="sn">${name||''}</p><p class="sp">Unterschrift ausstehend</p></div>`;
+  const logoHtml = p.logo
+    ? '<img src="'+p.logo+'" style="max-height:64px;max-width:200px;object-fit:contain;display:block"><div class="brand-sub">'+( p.name||'')+'</div>'
+    : '<div class="brand">TfP <em>Manager</em></div><div class="brand-sub">'+(p.name||'')+'</div>';
+  const html=`<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"><meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="TfP Manager">
+<meta name="application-name" content="TfP Manager">
+<meta name="theme-color" content="#0c0c14">
+<meta name="msapplication-TileColor" content="#0c0c14">
+<meta name="msapplication-TileImage" content="icons/icon-144.png">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-152.png">
+<link rel="apple-touch-icon" sizes="72x72" href="icons/icon-72.png">
+<link rel="apple-touch-icon" sizes="96x96" href="icons/icon-96.png">
+<link rel="apple-touch-icon" sizes="128x128" href="icons/icon-128.png">
+<link rel="apple-touch-icon" sizes="144x144" href="icons/icon-144.png">
+<link rel="apple-touch-icon" sizes="152x152" href="icons/icon-152.png">
+<link rel="apple-touch-icon" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" sizes="512x512" href="icons/icon-512.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Jost:wght@300;400;500&display=swap" rel="stylesheet"><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Jost',sans-serif;color:#1a1826;padding:54px 68px;font-size:13.5px;line-height:1.85;background:#fff}.hdr{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #c8a96e;padding-bottom:22px;margin-bottom:36px}.brand{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:400;letter-spacing:.06em;color:#1a1826}.brand em{color:#c8a96e;font-style:normal}.brand-sub{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:#999;margin-top:3px;font-weight:500}.meta{text-align:right;font-size:11px;color:#888;line-height:1.8}h1{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:500;margin-bottom:28px;letter-spacing:.02em;color:#1a1826}pre{white-space:pre-wrap;font-family:'Jost',sans-serif;font-size:13px;line-height:1.9;color:#2e2c3e}.sigs{display:flex;gap:52px;margin-top:56px;padding-top:28px;border-top:1px solid #e0dcd4;flex-wrap:wrap}.sw{flex:1;min-width:200px}.sl{font-size:10px;color:#bbb;text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px;font-weight:500}.si{max-height:80px;border:1px solid #e8e2d4;border-radius:6px;background:#f9f7f3;padding:6px;display:block}.sn{font-size:12.5px;font-weight:500;color:#333;margin-top:7px}.sd{font-size:10.5px;color:#bbb;margin-top:3px}.sline{height:1px;width:240px;background:#ddd;margin:30px 0 8px}.sp{font-size:11px;color:#ccc;font-style:italic;margin-top:3px}.footer{margin-top:56px;padding-top:16px;border-top:1px solid #eee;font-size:10px;color:#ccc;display:flex;justify-content:space-between}@media print{body{padding:36px 48px}}</style></head><body><div class="hdr"><div>${logoHtml}</div><div class="meta">Vertrag-ID: ${c.id}<br>Erstellt: ${fmtDate(c.contractDate||c.createdAt)}<br>Shooting: ${fmtDate(c.shootDate)}</div></div><h1>TfP-Vertrag</h1><pre>${body}</pre><div class="sigs">${sigB('Fotograf/in',c.sigP,p.name,c.sigPAt)}${sigB('Model',c.sigM,c.modelName,c.sigMAt)}</div><div class="footer"><span>Erstellt mit TfP Manager</span><span>${p.email||''}</span></div><script>window.onload=()=>setTimeout(()=>window.print(),400)<\/script>
+<script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then(reg => console.log('SW registered:', reg.scope))
+      .catch(err => console.log('SW error:', err));
+  });
+}
+</script>
+</body></html>`;
+  const blob=new Blob([html],{type:'text/html;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const w=window.open(url,'_blank');
+  if(!w)alert('Bitte Popups für diese Seite erlauben und erneut versuchen.');
+  setTimeout(()=>URL.revokeObjectURL(url),90000);
+}
+
+let emailCid=null;
+function openEmailSend(id){
+  emailCid=id;
+  const sel=document.getElementById('es-tpl');
+  sel.innerHTML=DB.emailTemplates.map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
+  const c=DB.contracts.find(x=>x.id===id);
+  document.getElementById('es-to').value=c.modelEmail||'';
+  applyEmailTpl();openOv('ov-email-send');
+}
+function applyEmailTpl(){
+  const id=document.getElementById('es-tpl').value;const tpl=DB.emailTemplates.find(t=>t.id===id);if(!tpl)return;
+  const c=emailCid?DB.contracts.find(x=>x.id===emailCid):null;
+  document.getElementById('es-subj').value=fill(tpl.subject,c);
+  document.getElementById('es-body').value=fill(tpl.body,c);
+}
+function doSendEmail(){
+  const to=document.getElementById('es-to').value;const subj=document.getElementById('es-subj').value;const body=document.getElementById('es-body').value;
+  window.location.href=`mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(body)}`;
+  closeOv('ov-email-send');
+}
+
+let sigWho=null,sigCid=null,sigCtx=null,sigDrawing=false;
+function openSigModal(who,cid){
+  sigWho=who;sigCid=cid;
+  const c=DB.contracts.find(x=>x.id===cid);const p=DB.photographer;
+  document.getElementById('sig-title').textContent=who==='p'?`Unterschrift: ${p.name||'Fotograf/in'}`:`Unterschrift: ${c.modelName||'Model'}`;
+  document.getElementById('sig-sub').textContent=who==='p'?'Fotograf/in bitte mit Maus oder Finger unterschreiben:':'Model bitte mit Maus oder Finger unterschreiben:';
+  const canvas=document.getElementById('sig-canvas');
+  canvas.width=canvas.offsetWidth||480;sigCtx=canvas.getContext('2d');
+  sigCtx.fillStyle='#f9f7f3';sigCtx.fillRect(0,0,canvas.width,canvas.height);
+  const existing=who==='p'?c.sigP:c.sigM;
+  if(existing){const img=new Image();img.onload=()=>sigCtx.drawImage(img,0,0,canvas.width,canvas.height);img.src=existing;}
+  openOv('ov-sig');
+}
+function getPos(e,canvas){const r=canvas.getBoundingClientRect();const s=e.touches?e.touches[0]:e;return{x:(s.clientX-r.left)*(canvas.width/r.width),y:(s.clientY-r.top)*(canvas.height/r.height)};}
+(function(){
+  const canvas=document.getElementById('sig-canvas');
+  const start=e=>{e.preventDefault();sigDrawing=true;if(!sigCtx)return;const pos=getPos(e,canvas);sigCtx.beginPath();sigCtx.moveTo(pos.x,pos.y);sigCtx.strokeStyle='#1a1826';sigCtx.lineWidth=2.2;sigCtx.lineCap='round';sigCtx.lineJoin='round';};
+  const draw=e=>{e.preventDefault();if(!sigDrawing||!sigCtx)return;const pos=getPos(e,canvas);sigCtx.lineTo(pos.x,pos.y);sigCtx.stroke();};
+  const end=()=>{sigDrawing=false;};
+  canvas.addEventListener('mousedown',start);canvas.addEventListener('mousemove',draw);canvas.addEventListener('mouseup',end);canvas.addEventListener('mouseleave',end);
+  canvas.addEventListener('touchstart',start,{passive:false});canvas.addEventListener('touchmove',draw,{passive:false});canvas.addEventListener('touchend',end);
+})();
+function clearSig(){if(!sigCtx)return;const c=document.getElementById('sig-canvas');sigCtx.fillStyle='#f9f7f3';sigCtx.fillRect(0,0,c.width,c.height);}
+function confirmSig(){
+  const canvas=document.getElementById('sig-canvas');const data=canvas.toDataURL('image/png');
+  const c=DB.contracts.find(x=>x.id===sigCid);if(!c)return;
+  if(sigWho==='p'){c.sigP=data;c.sigPAt=new Date().toISOString();}else{c.sigM=data;c.sigMAt=new Date().toISOString();}
+  persist();closeOv('ov-sig');renderContracts();
+}
+
+function initNewContract(){
+  const td=toDay();
+  document.getElementById('nc-sd').value=td;document.getElementById('nc-cd').value=td;
+  ['nc-mn','nc-me','nc-ma','nc-muaname','nc-muaemail','nc-loc','nc-km'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('km-msg').textContent='';document.getElementById('km-msg').className='km-status';
+  const tsel=document.getElementById('nc-tpl');
+  tsel.innerHTML=DB.templates.map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
+  loadTplText();
+  const csel=document.getElementById('nc-contact');
+  csel.innerHTML='<option value="">– wählen –</option>'+DB.contacts.map(c=>`<option value="${c.id}">${c.name} (${c.role})</option>`).join('');
+}
+function loadTplText(){const id=document.getElementById('nc-tpl').value;const t=DB.templates.find(x=>x.id===id);if(t)document.getElementById('nc-body').value=t.body;}
+function fillFromContact(){const id=document.getElementById('nc-contact').value;if(!id)return;const c=DB.contacts.find(x=>x.id===id);if(!c)return;document.getElementById('nc-mn').value=c.name||'';document.getElementById('nc-me').value=c.email||'';document.getElementById('nc-ma').value=c.address||'';}
+function resetKm(){document.getElementById('nc-km').value='';document.getElementById('km-msg').textContent='';document.getElementById('km-msg').className='km-status';}
+
+async function autoKm(){
+  const p=DB.photographer;const loc=document.getElementById('nc-loc').value.trim();
+  const msg=document.getElementById('km-msg');const btn=document.getElementById('km-btn');
+  if(!p.homeCity){msg.textContent='⚠ Bitte zuerst Heimatstadt im Profil eintragen.';msg.className='km-status km-err';return;}
+  if(!loc){msg.textContent='⚠ Bitte zuerst eine Location eintragen.';msg.className='km-status km-err';return;}
+  btn.textContent='⏳ Berechne…';btn.disabled=true;msg.textContent='';msg.className='km-status';
+  try{
+    const km=await calcRoute(p.homeCity,loc);
+    document.getElementById('nc-km').value=km;
+    msg.textContent=`✓ ${km} km – direkte Fahrtstrecke (OpenStreetMap / OSRM)`;msg.className='km-status km-ok';
+  }catch(e){msg.textContent='✗ Fehler: '+e.message;msg.className='km-status km-err';}
+  btn.textContent='📍 Route berechnen';btn.disabled=false;
+}
+async function geocode(place){const r=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(place)}&format=json&limit=1`,{headers:{'Accept-Language':'de'}});const d=await r.json();if(!d.length)throw new Error(`Ort nicht gefunden: "${place}"`);return{lat:parseFloat(d[0].lat),lon:parseFloat(d[0].lon)};}
+async function calcRoute(from,to){const[a,b]=await Promise.all([geocode(from),geocode(to)]);const r=await fetch(`https://router.project-osrm.org/route/v1/driving/${a.lon},${a.lat};${b.lon},${b.lat}?overview=false`);const d=await r.json();if(d.code!=='Ok')throw new Error('Route konnte nicht berechnet werden.');return Math.round(d.routes[0].distance/1000);}
+
+function saveContract(){
+  const mn=document.getElementById('nc-mn').value.trim();if(!mn){alert('Bitte Model-Name eintragen.');return;}
+  const km=document.getElementById('nc-km').value;const sd=document.getElementById('nc-sd').value;const loc=document.getElementById('nc-loc').value;
+  const c={id:uid(),createdAt:new Date().toISOString(),modelName:mn,modelEmail:document.getElementById('nc-me').value,modelAddress:document.getElementById('nc-ma').value,muaName:document.getElementById('nc-muaname').value,muaEmail:document.getElementById('nc-muaemail').value,shootDate:sd,contractDate:document.getElementById('nc-cd').value,location:loc,distanceKm:km!==''?Number(km):null,contractBody:document.getElementById('nc-body').value,sigP:null,sigPAt:null,sigM:null,sigMAt:null};
+  DB.contracts.push(c);
+  if(km!==''&&!isNaN(km))DB.stats.push({id:uid(),contractId:c.id,km:Number(km),year:new Date(sd).getFullYear(),date:sd,location:loc});
+  persist();activeContractId=c.id;go('contracts');
+}
+
+let editCid=null;
+const RBADGE={Model:'badge-info','Make-up-Artist':'badge-ok',Stylist:'badge-ok',Assistent:'badge-warn',Sonstiges:'badge-accent'};
+function openContactModal(id){
+  editCid=id||null;document.getElementById('cm-title').textContent=id?'Kontakt bearbeiten':'Neuer Kontakt';
+  if(id){const c=DB.contacts.find(x=>x.id===id);if(c){document.getElementById('cm-name').value=c.name||'';document.getElementById('cm-role').value=c.role||'Model';document.getElementById('cm-email').value=c.email||'';document.getElementById('cm-phone').value=c.phone||'';document.getElementById('cm-addr').value=c.address||'';document.getElementById('cm-notes').value=c.notes||'';}}
+  else{['cm-name','cm-email','cm-phone','cm-addr','cm-notes'].forEach(i=>document.getElementById(i).value='');document.getElementById('cm-role').value='Model';}
+  openOv('ov-contact');
+}
+function saveContact(){
+  const name=document.getElementById('cm-name').value.trim();if(!name)return;
+  const obj={name,role:document.getElementById('cm-role').value,email:document.getElementById('cm-email').value,phone:document.getElementById('cm-phone').value,address:document.getElementById('cm-addr').value,notes:document.getElementById('cm-notes').value};
+  if(editCid){DB.contacts=DB.contacts.map(c=>c.id===editCid?{...c,...obj}:c);}else{DB.contacts.push({...obj,id:uid(),createdAt:toDay()});}
+  persist();closeOv('ov-contact');renderContacts();
+}
+function deleteCon(id,e){if(e)e.stopPropagation();if(!confirm('Kontakt löschen?'))return;DB.contacts=DB.contacts.filter(c=>c.id!==id);persist();renderContacts();}
+function renderContacts(){
+  const g=document.getElementById('contacts-grid');
+  if(!DB.contacts.length){g.innerHTML='<div class="empty-state"><div class="empty-icon">👥</div><span>Noch keine Kontakte</span></div>';return;}
+  g.innerHTML=DB.contacts.map(c=>`<div class="contact-card" onclick="openContactModal('${c.id}')"><button class="contact-del" onclick="deleteCon('${c.id}',event)">×</button><div class="contact-name">${pTag(maskName(c.name))}</div><span class="badge ${RBADGE[c.role]||'badge-accent'}">${c.role}</span><div class="contact-meta">${c.email?`<span>✉ ${pTag(maskEmail(c.email))}</span>`:''}${c.phone?`<span>☎ ${pTag(maskPhone(c.phone))}</span>`:''}${c.address?`<span>📍 ${pTag(maskAddr(c.address))}</span>`:''}</div></div>`).join('');
+}
+
+let editTid=null;
+function openTplModal(id){
+  editTid=id||null;document.getElementById('tm-title').textContent=id?'Vorlage bearbeiten':'Neue Vorlage';
+  if(id){const t=DB.templates.find(x=>x.id===id);if(t){document.getElementById('tm-name').value=t.name;document.getElementById('tm-body').value=t.body;}}
+  else{document.getElementById('tm-name').value='';document.getElementById('tm-body').value='';}
+  openOv('ov-tpl');
+}
+function saveTpl(){
+  const name=document.getElementById('tm-name').value.trim();if(!name)return;
+  const body=document.getElementById('tm-body').value;
+  if(editTid){DB.templates=DB.templates.map(t=>t.id===editTid?{...t,name,body}:t);}else{DB.templates.push({id:uid(),name,body});}
+  persist();closeOv('ov-tpl');renderTemplates();
+}
+function deleteTpl(id){if(!confirm('Vorlage löschen?'))return;DB.templates=DB.templates.filter(t=>t.id!==id);persist();renderTemplates();}
+function renderTemplates(){
+  document.getElementById('tag-strip').innerHTML=PLACEHOLDERS.map(p=>`<code onclick="navigator.clipboard&&navigator.clipboard.writeText('${p}')" title="Klicken zum Kopieren">${p}</code>`).join('');
+  document.getElementById('tpl-list').innerHTML=DB.templates.map(t=>`<div class="tpl-item"><div class="tpl-item-hdr"><div class="tpl-item-name">${t.name}</div><div class="btn-row"><button class="btn btn-sm" onclick="openTplModal('${t.id}')">Bearbeiten</button><button class="btn btn-danger btn-sm" onclick="deleteTpl('${t.id}')">Löschen</button></div></div><pre class="tpl-preview">${t.body.slice(0,200)}…</pre></div>`).join('');
+}
+
+let editEid=null;
+function openEtModal(id){
+  editEid=id||null;document.getElementById('et-title').textContent=id?'E-Mail-Vorlage bearbeiten':'Neue E-Mail-Vorlage';
+  if(id){const t=DB.emailTemplates.find(x=>x.id===id);if(t){document.getElementById('et-name').value=t.name;document.getElementById('et-subj').value=t.subject;document.getElementById('et-body').value=t.body;}}
+  else{['et-name','et-subj','et-body'].forEach(i=>document.getElementById(i).value='');}
+  openOv('ov-et');
+}
+function saveEt(){
+  const name=document.getElementById('et-name').value.trim();if(!name)return;
+  const obj={name,subject:document.getElementById('et-subj').value,body:document.getElementById('et-body').value};
+  if(editEid){DB.emailTemplates=DB.emailTemplates.map(t=>t.id===editEid?{...t,...obj}:t);}else{DB.emailTemplates.push({id:uid(),...obj});}
+  persist();closeOv('ov-et');renderEmailTpls();
+}
+function deleteEt(id){if(!confirm('E-Mail-Vorlage löschen?'))return;DB.emailTemplates=DB.emailTemplates.filter(t=>t.id!==id);persist();renderEmailTpls();}
+function renderEmailTpls(){
+  document.getElementById('et-list').innerHTML=DB.emailTemplates.map(t=>`<div class="tpl-item"><div class="tpl-item-hdr"><div class="tpl-item-name">${t.name}</div><div class="btn-row"><button class="btn btn-sm" onclick="openEtModal('${t.id}')">Bearbeiten</button><button class="btn btn-danger btn-sm" onclick="deleteEt('${t.id}')">Löschen</button></div></div><div style="font-size:12px;color:var(--muted);margin-bottom:5px">Betreff: ${t.subject}</div><pre class="tpl-preview">${t.body.slice(0,180)}…</pre></div>`).join('');
+}
+
+function renderStats(){
+  const yr=new Date().getFullYear();const ysel=document.getElementById('st-year');
+  const allYears=[...new Set([yr,...DB.stats.map(r=>r.year)])].sort((a,b)=>b-a);
+  const cur=parseInt(ysel.value)||yr;
+  ysel.innerHTML=allYears.map(y=>`<option value="${y}"${y===cur?'selected':''}>${y}</option>`).join('');
+  if(!document.getElementById('st-date').value)document.getElementById('st-date').value=toDay();
+  const rows=DB.stats.filter(r=>r.year==cur).sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const total=rows.reduce((s,r)=>s+(+r.km||0),0);
+  const totalRT=total*2;
+  const allKm=DB.stats.reduce((s,r)=>s+(+r.km||0),0);
+  const allKmRT=allKm*2;
+  document.getElementById('stats-tiles').innerHTML=[
+    {v:total+' km',l:'Einfach in '+cur},
+    {v:totalRT+' km',l:'Hin & Rückfahrt '+cur},
+    {v:allKm+' km',l:'Einfach gesamt'},
+    {v:allKmRT+' km',l:'Hin & Rückfahrt gesamt'},
+    {v:rows.length,l:'Fahrten '+cur},
+    {v:DB.stats.length,l:'Fahrten gesamt'},
+  ].map(t=>`<div class="stat-tile"><div class="stat-val">${t.v}</div><div class="stat-lbl">${t.l}</div></div>`).join('');
+  document.getElementById('stats-tbody').innerHTML=rows.length
+    ?rows.map(r=>{const rt=(+r.km||0)*2;return`<tr>
+      <td>${fmtDate(r.date)}</td>
+      <td>${r.location||'–'}</td>
+      <td style="text-align:right;font-weight:500">${r.km} km</td>
+      <td style="text-align:right;font-weight:500;color:var(--info)">${rt} km</td>
+      <td><button style="background:none;border:none;color:var(--dim);cursor:pointer;font-size:15px" onclick="delStat('${r.id}')">×</button></td>
+    </tr>`;}).join('')+`<tr style="border-top:1px solid var(--border)">
+      <td colspan="2" style="font-weight:600;color:var(--muted)">Gesamt ${cur}</td>
+      <td style="text-align:right;font-weight:600;color:var(--accent)">${total} km</td>
+      <td style="text-align:right;font-weight:600;color:var(--info)">${totalRT} km</td>
+      <td></td>
+    </tr>`
+    :`<tr><td colspan="5" style="color:var(--dim);text-align:center;padding:20px">Keine Einträge für ${cur}</td></tr>`;
+}
+function addStatManual(){
+  const km=document.getElementById('st-km').value;if(!km||isNaN(km))return;
+  const date=document.getElementById('st-date').value||toDay();const loc=document.getElementById('st-loc').value;
+  DB.stats.push({id:uid(),km:Number(km),year:new Date(date).getFullYear(),date,location:loc});
+  persist();renderStats();document.getElementById('st-km').value='';document.getElementById('st-loc').value='';
+}
+function delStat(id){DB.stats=DB.stats.filter(r=>r.id!==id);persist();renderStats();}
+
+function initSettings(){
+  const p=DB.photographer;
+  document.getElementById('p-name').value=p.name||'';
+  document.getElementById('p-addr').value=p.address||'';
+  document.getElementById('p-city').value=p.homeCity||'';
+  document.getElementById('p-email').value=p.email||'';
+  document.getElementById('p-msg').style.display='none';
+  // Show logo preview if exists
+  const wrap=document.getElementById('logo-preview-wrap');
+  const img=document.getElementById('logo-preview');
+  if(p.logo){wrap.style.display='block';img.src=p.logo;}
+  else{wrap.style.display='none';img.src='';}
+}
+
+function handleLogoUpload(event){
+  const file=event.target.files[0];
+  if(!file)return;
+  if(file.size>2*1024*1024){alert('Logo zu groß – bitte max. 2 MB verwenden.');return;}
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const data=e.target.result;
+    DB.photographer.logo=data;
+    persist();
+    document.getElementById('logo-preview').src=data;
+    document.getElementById('logo-preview-wrap').style.display='block';
+    updateSidebarLogo();
+    showToast('✓ Logo gespeichert');
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeLogo(){
+  DB.photographer.logo=null;
+  persist();
+  document.getElementById('logo-preview-wrap').style.display='none';
+  document.getElementById('logo-preview').src='';
+  document.getElementById('logo-input').value='';
+  updateSidebarLogo();
+  showToast('Logo entfernt');
+}
+
+function updateSidebarLogo(){
+  const p=DB.photographer;
+  const el=document.getElementById('sidebar-logo');
+  if(p.logo){
+    el.innerHTML='<img src="'+p.logo+'" style="max-height:52px;max-width:180px;object-fit:contain;display:block;border-radius:4px">'
+      +'<div class="logo-sub" style="margin-top:6px">Vertragsmanager</div>';
+  } else {
+    el.innerHTML='<div class="logo-mark">TfP</div><div class="logo-sub">Vertragsmanager</div>';
+  }
+}
+
+function saveProfile(){
+  DB.photographer={
+    ...DB.photographer,
+    name:document.getElementById('p-name').value,
+    address:document.getElementById('p-addr').value,
+    homeCity:document.getElementById('p-city').value,
+    email:document.getElementById('p-email').value
+  };
+  persist();
+  const msg=document.getElementById('p-msg');msg.style.display='inline';setTimeout(()=>msg.style.display='none',2500);
+  document.getElementById('sb-info').textContent=DB.photographer.name?'👤 '+DB.photographer.name:'⚠ Profil ausfüllen';
+  updateSidebarLogo();
+}
+
+function openOv(id){document.getElementById(id).classList.add('open');}
+function closeOv(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.overlay').forEach(ov=>ov.addEventListener('click',e=>{if(e.target===ov)closeOv(ov.id);}));
+document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.overlay.open').forEach(ov=>closeOv(ov.id));});
+
+// ── PRIVACY MODE ─────────────────────────────────────────────────────────────
+let privacyOn=false;
+
+// "Anna Müller" → "A. M."
+function maskName(name){
+  if(!name||!privacyOn)return name;
+  return name.trim().split(/\s+/).map(w=>w[0].toUpperCase()+'.').join(' ');
+}
+// "anna@beispiel.de" → "a***@***.de"
+function maskEmail(email){
+  if(!email||!privacyOn)return email;
+  const[local,domain]=email.split('@');
+  if(!domain)return email[0]+'***';
+  const ext=domain.lastIndexOf('.');
+  const domMasked=ext>0?'***'+domain.slice(ext):'***';
+  return(local[0]||'')+'***@'+domMasked;
+}
+// "+49 171 1234567" → "+49 ***"
+function maskPhone(phone){
+  if(!phone||!privacyOn)return phone;
+  const m=phone.match(/^(\+?\d{1,4}[\s-]?)/);
+  return(m?m[1]:'')+'***';
+}
+// "Musterstr. 1, 10115 Berlin" → "***, Berlin"
+function maskAddr(addr){
+  if(!addr||!privacyOn)return addr;
+  const parts=addr.split(',');
+  if(parts.length<2)return'***';
+  return'***, '+parts.slice(-1)[0].trim();
+}
+// Wrap in styled tag when privacy active
+function pTag(text){
+  return privacyOn?`<em class="priv-tag">${text}</em>`:text;
+}
+
+function togglePrivacy(){
+  privacyOn=!privacyOn;
+  const btn=document.getElementById('privacy-btn');
+  btn.classList.toggle('active',privacyOn);
+  document.getElementById('privacy-label').textContent=privacyOn?'Sichtschutz AN':'Sichtschutz';
+  btn.querySelector('span:first-child').textContent=privacyOn?'🔓':'🔒';
+  // Re-render affected views
+  const active=document.querySelector('.view.active');
+  if(active){
+    const id=active.id.replace('v-','');
+    if(id==='dashboard')renderDashboard();
+    if(id==='contacts')renderContacts();
+    if(id==='contracts')renderContracts();
+  }
+}
+document.addEventListener('keydown',e=>{if(e.key==='F2')togglePrivacy();});
+
+// ── PLATZHALTER EINFÜGEN ─────────────────────────────────────────────────────
+// Fügt Platzhalter an der aktuellen Cursorposition ein.
+// activeId = zuletzt fokussiertes Feld; fallbackId = Fallback wenn kein Fokus
+function insertPlaceholder(fallbackId, placeholder, altFallbackId){
+  // Welches Feld war zuletzt aktiv?
+  const focused = document.activeElement;
+  let target = null;
+  const candidates = [fallbackId, altFallbackId].filter(Boolean);
+  if(focused && (focused.tagName==='TEXTAREA'||focused.tagName==='INPUT') && candidates.includes(focused.id)){
+    target = focused;
+  } else {
+    // Kein passendes Feld fokussiert → Standard-Fallback
+    target = document.getElementById(altFallbackId||fallbackId);
+  }
+  if(!target) return;
+  const start = target.selectionStart ?? target.value.length;
+  const end   = target.selectionEnd   ?? target.value.length;
+  target.value = target.value.slice(0,start) + placeholder + target.value.slice(end);
+  const pos = start + placeholder.length;
+  target.focus();
+  target.setSelectionRange(pos, pos);
+}
+function closeDsgvo(){
+  closeOv('ov-dsgvo');
+  try{localStorage.setItem('tfp_dsgvo_v2','1');}catch(e){}
+}
+if(!localStorage.getItem('tfp_dsgvo_v2')){
+  document.getElementById('ov-dsgvo').classList.add('open');
+}
+
+// ── SHOOTING PLANNER ─────────────────────────────────────────────────────────
+let calYear = new Date().getFullYear();
+let calMonth = new Date().getMonth();
+let editShootingId = null;
+
+const STATUS_LABEL = {confirmed:'Bestätigt', open:'Offen', cancelled:'Abgesagt'};
+const STATUS_CLASS = {confirmed:'status-confirmed', open:'status-open', cancelled:'status-cancelled'};
+const MONTHS_DE = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+const DAYS_SHORT = ['Mo','Di','Mi','Do','Fr','Sa','So'];
+
+function renderPlanung() {
+  if(!DB.shootings) DB.shootings = [];
+  renderCalendar();
+  renderShootingList();
+  checkReminders();
+}
+
+function renderCalendar() {
+  document.getElementById('cal-month-label').textContent = MONTHS_DE[calMonth] + ' ' + calYear;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const firstDay = new Date(calYear, calMonth, 1);
+  // Monday = 0 offset
+  let startOffset = firstDay.getDay() - 1;
+  if(startOffset < 0) startOffset = 6;
+  const daysInMonth = new Date(calYear, calMonth+1, 0).getDate();
+  const daysInPrev = new Date(calYear, calMonth, 0).getDate();
+
+  let html = '';
+  let dayCount = 0;
+  const totalCells = Math.ceil((startOffset + daysInMonth) / 7) * 7;
+
+  for(let i = 0; i < totalCells; i++) {
+    let day, month, year, isOther = false;
+    if(i < startOffset) {
+      day = daysInPrev - startOffset + i + 1;
+      month = calMonth - 1; year = calYear;
+      if(month < 0) { month = 11; year--; }
+      isOther = true;
+    } else if(i - startOffset >= daysInMonth) {
+      day = i - startOffset - daysInMonth + 1;
+      month = calMonth + 1; year = calYear;
+      if(month > 11) { month = 0; year++; }
+      isOther = true;
+    } else {
+      day = i - startOffset + 1;
+      month = calMonth; year = calYear;
+    }
+    const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    const cellDate = new Date(year, month, day);
+    const isToday = cellDate.getTime() === today.getTime();
+    const dayShootings = (DB.shootings||[]).filter(s => s.date === dateStr);
+    const hasShooting = dayShootings.length > 0;
+    const dots = dayShootings.slice(0,2).map(s => {
+      const dotColor = s.status==='confirmed' ? 'var(--success)' : s.status==='cancelled' ? 'var(--danger)' : 'var(--warn)';
+      return '<div style="color:'+dotColor+';font-size:9px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(s.title||'Shooting')+'</div>';
+    }).join('');
+    html += `<div class="cal-day${isOther?' other-month':''}${isToday?' today':''}${hasShooting?' has-shooting':''}" onclick="calDayClick('${dateStr}')">
+      <div class="cal-dn">${day}</div>
+      <div class="cal-dot">${dots}</div>
+    </div>`;
+  }
+  document.getElementById('cal-body').innerHTML = html;
+}
+
+function calDayClick(dateStr) {
+  openShootingModal(null, dateStr);
+}
+
+function calPrev() {
+  calMonth--;
+  if(calMonth < 0) { calMonth = 11; calYear--; }
+  renderCalendar();
+}
+
+function calNext() {
+  calMonth++;
+  if(calMonth > 11) { calMonth = 0; calYear++; }
+  renderCalendar();
+}
+
+function renderShootingList() {
+  const filter = document.getElementById('plan-filter')?.value || 'all';
+  const today = new Date(); today.setHours(0,0,0,0);
+  let list = (DB.shootings||[])
+    .filter(s => filter==='all' || s.status===filter)
+    .sort((a,b) => a.date.localeCompare(b.date));
+
+  const el = document.getElementById('shooting-list');
+  if(!list.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">\u{1F4C5}</div><span>Keine Shootings geplant</span></div>';
+    return;
+  }
+
+  let html = '';
+  let pastHeaderShown = false;
+  let upcomingHeaderShown = false;
+
+  list.forEach(s => {
+    const d = new Date(s.date); d.setHours(0,0,0,0);
+    const isPast = d < today;
+    const daysUntil = Math.round((d - today) / 86400000);
+
+    if(!isPast && !upcomingHeaderShown) {
+      upcomingHeaderShown = true;
+      html += '<div style="font-size:10.5px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;font-weight:600;margin:4px 0 8px">Anstehend</div>';
+    }
+    if(isPast && !pastHeaderShown) {
+      pastHeaderShown = true;
+      html += '<div style="font-size:10.5px;color:var(--dim);letter-spacing:.08em;text-transform:uppercase;font-weight:600;margin:16px 0 8px">Vergangen</div>';
+    }
+
+    const dayNum = d.getDate();
+    const mon = MONTHS_DE[d.getMonth()].slice(0,3);
+    const urgency = daysUntil===0 ? '\uD83D\uDD34 Heute' : daysUntil===1 ? '\uD83D\uDFE1 Morgen' : daysUntil>0&&daysUntil<=7 ? '\uD83D\uDFE1 in '+daysUntil+' Tagen' : '';
+    const reminderEl = s.reminder ? '<span class="reminder-badge">\u23F0 '+s.reminder+'d Erinnerung</span>' : '';
+    const notesEl = s.notes ? '<div class="shooting-meta" style="margin-top:2px;font-style:italic">'+s.notes.slice(0,60)+(s.notes.length>60?'\u2026':'')+'</div>' : '';
+    const pastStyle = isPast ? 'opacity:0.5;' : '';
+
+    html += '<div class="shooting-item" style="margin-bottom:6px;'+pastStyle+'" onclick="openShootingModal(\''+s.id+'\')">'      +'<div class="shooting-date-box"><div class="shooting-day">'+dayNum+'</div><div class="shooting-month">'+mon+'</div></div>'      +'<div class="shooting-info">'      +'<div class="shooting-title">'+(s.title||'Shooting')+'</div>'      +'<div class="shooting-meta">'+(s.time?s.time+' · ':'')+(s.location||'Kein Ort')+(urgency?' · '+urgency:'')+'</div>'      +notesEl+reminderEl      +'</div>'      +'<div class="status-dot '+(STATUS_CLASS[s.status]||'status-open')+'" title="'+(STATUS_LABEL[s.status]||'Offen')+'"></div>'      +'</div>';
+  });
+
+  el.innerHTML = html;
+}
+
+function openShootingModal(id, prefillDate) {
+  editShootingId = id||null;
+  document.getElementById('sm-title').textContent = id ? 'Shooting bearbeiten' : 'Neues Shooting';
+  document.getElementById('sm-delete-btn').style.display = id ? 'inline-flex' : 'none';
+  document.getElementById('sm-ical-btn').style.display = id ? 'inline-flex' : 'none';
+  // Fill contract select
+  const csel = document.getElementById('sm-contract');
+  csel.innerHTML = '<option value="">– keinen –</option>' +
+    [...DB.contracts].reverse().map(c=>`<option value="${c.id}">${c.modelName||'Kein Name'} · ${fmtDate(c.shootDate)}</option>`).join('');
+
+  if(id) {
+    const s = DB.shootings.find(x=>x.id===id);
+    if(!s) return;
+    document.getElementById('sm-title-input').value = s.title||'';
+    document.getElementById('sm-date').value = s.date||'';
+    document.getElementById('sm-time').value = s.time||'';
+    document.getElementById('sm-loc').value = s.location||'';
+    document.getElementById('sm-status').value = s.status||'open';
+    document.getElementById('sm-reminder').value = s.reminder||'';
+    document.getElementById('sm-notes').value = s.notes||'';
+    document.getElementById('sm-contract').value = s.contractId||'';
+  } else {
+    document.getElementById('sm-title-input').value = '';
+    document.getElementById('sm-date').value = prefillDate||toDay();
+    document.getElementById('sm-time').value = '';
+    document.getElementById('sm-loc').value = '';
+    document.getElementById('sm-status').value = 'open';
+    document.getElementById('sm-reminder').value = '';
+    document.getElementById('sm-notes').value = '';
+    document.getElementById('sm-contract').value = '';
+  }
+  openOv('ov-shooting');
+}
+
+function saveShooting() {
+  const title = document.getElementById('sm-title-input').value.trim();
+  const date = document.getElementById('sm-date').value;
+  if(!title||!date) { alert('Bitte Titel und Datum ausfüllen.'); return; }
+  const obj = {
+    title, date,
+    time: document.getElementById('sm-time').value,
+    location: document.getElementById('sm-loc').value,
+    status: document.getElementById('sm-status').value,
+    reminder: document.getElementById('sm-reminder').value,
+    notes: document.getElementById('sm-notes').value,
+    contractId: document.getElementById('sm-contract').value,
+  };
+  if(!DB.shootings) DB.shootings = [];
+  if(editShootingId) {
+    DB.shootings = DB.shootings.map(s => s.id===editShootingId ? {...s,...obj} : s);
+  } else {
+    DB.shootings.push({...obj, id:uid(), createdAt:new Date().toISOString()});
+  }
+  persist(); closeOv('ov-shooting'); renderPlanung();
+  showToast('✓ Shooting gespeichert');
+}
+
+function deleteShooting() {
+  if(!confirm('Shooting wirklich löschen?')) return;
+  DB.shootings = DB.shootings.filter(s=>s.id!==editShootingId);
+  persist(); closeOv('ov-shooting'); renderPlanung();
+  showToast('Shooting gelöscht');
+}
+
+function exportIcal() {
+  const s = DB.shootings.find(x => x.id === editShootingId);
+  if(!s) return;
+  const p = DB.photographer;
+
+  // Build datetime strings
+  const dateClean = s.date.replace(/-/g,'');
+  let dtStart, dtEnd;
+  if(s.time) {
+    const [h, m] = s.time.split(':');
+    const pad = n => String(n).padStart(2,'0');
+    dtStart = dateClean + 'T' + pad(h) + pad(m) + '00';
+    // Default 2h duration
+    const endH = (parseInt(h) + 2) % 24;
+    dtEnd = dateClean + 'T' + pad(endH) + pad(m) + '00';
+  } else {
+    dtStart = dateClean;
+    dtEnd   = dateClean;
+  }
+
+  const now = new Date().toISOString().replace(/[-:.]/g,'').slice(0,15) + 'Z';
+  const uid_val = s.id + '@tfp-manager';
+
+  // Build reminder block
+  let alarmBlock = '';
+  if(s.reminder) {
+    alarmBlock = [
+      'BEGIN:VALARM',
+      'TRIGGER:-P' + s.reminder + 'D',
+      'ACTION:DISPLAY',
+      'DESCRIPTION:Erinnerung: ' + (s.title||'Shooting'),
+      'END:VALARM'
+    ].join('\r\n');
+  }
+
+  const lines = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//TfP Manager//DE',
+    'CALSCALE:GREGORIAN',
+    'METHOD:PUBLISH',
+    'BEGIN:VEVENT',
+    'UID:' + uid_val,
+    'DTSTAMP:' + now,
+    s.time ? 'DTSTART:' + dtStart : 'DTSTART;VALUE=DATE:' + dtStart,
+    s.time ? 'DTEND:' + dtEnd   : 'DTEND;VALUE=DATE:' + dtEnd,
+    'SUMMARY:📷 TfP Shooting – ' + (s.title||'Shooting'),
+    s.location ? 'LOCATION:' + s.location : '',
+    'DESCRIPTION:' + [
+      'Fotograf/in: ' + (p.name||''),
+      s.notes ? 'Notizen: ' + s.notes : '',
+      'Status: ' + (STATUS_LABEL[s.status]||'Offen'),
+      '',
+      'Erstellt mit TfP Manager'
+    ].filter(Boolean).join('\\n'),
+    'STATUS:' + (s.status==='confirmed' ? 'CONFIRMED' : s.status==='cancelled' ? 'CANCELLED' : 'TENTATIVE'),
+    alarmBlock,
+    'END:VEVENT',
+    'END:VCALENDAR'
+  ].filter(l => l !== '').join('\r\n');
+
+  const blob = new Blob([lines], {type:'text/calendar;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const safeName = (s.title||'Shooting').replace(/[^a-z0-9]/gi,'-').toLowerCase();
+  a.href = url;
+  a.download = 'tfp-' + safeName + '-' + s.date + '.ics';
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+  showToast('✓ Kalenderdatei (.ics) gespeichert');
+}
+
+function checkReminders() {
+  if(!DB.shootings) return;
+  const today = new Date(); today.setHours(0,0,0,0);
+  DB.shootings.forEach(s => {
+    if(!s.reminder || s.status==='cancelled') return;
+    const d = new Date(s.date); d.setHours(0,0,0,0);
+    const daysUntil = Math.round((d - today) / 86400000);
+    if(daysUntil === parseInt(s.reminder) && !s._reminded) {
+      showToast(`⏰ Erinnerung: "${s.title}" in ${daysUntil} Tag(en)`, 6000);
+      s._reminded = true;
+    }
+  });
+}
+
+// ── MOBILE SIDEBAR ────────────────────────────────────────────────────────────
+function toggleSidebar(){
+  const sb=document.getElementById('sidebar');
+  const ov=document.getElementById('sidebar-overlay');
+  const hb=document.getElementById('hamburger');
+  const open=sb.classList.toggle('open');
+  ov.classList.toggle('open',open);
+  hb.classList.toggle('open',open);
+  document.body.style.overflow=open?'hidden':'';
+}
+function closeSidebar(){
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.remove('open');
+  document.getElementById('hamburger').classList.remove('open');
+  document.body.style.overflow='';
+}
+
+// ── EXPORT / IMPORT ──────────────────────────────────────────────────────────
+function exportJSON() {
+  const date = new Date().toISOString().slice(0,10);
+  const filename = `tfp-backup-${date}.json`;
+  const blob = new Blob([JSON.stringify(DB, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+  showToast('✓ Backup gespeichert: ' + filename);
+}
+
+function triggerImport() {
+  document.getElementById('import-file').value = '';
+  document.getElementById('import-file').click();
+}
+
+function importJSON(event) {
+  const file = event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const parsed = JSON.parse(e.target.result);
+      if(!parsed.photographer || !Array.isArray(parsed.contracts)) {
+        alert('❌ Ungültige Backup-Datei. Bitte nur Dateien laden die mit dieser App exportiert wurden.');
+        return;
+      }
+      if(!confirm('Backup laden?\n\n⚠ Alle aktuellen Daten werden überschrieben!\n\nDatei: ' + file.name)) return;
+      DB = parsed;
+      [{id:'t1',name:'Standard TfP-Vertrag',body:TPL1},{id:'t2',name:'Erweiterter TfP-Vertrag (inkl. MUA)',body:TPL2},{id:'t3',name:'TfP kommerziell – OnlyFans',body:TPL3},{id:'t4',name:'TfP kommerziell – Patreon',body:TPL4}].forEach(t=>{
+        if(!DB.templates) DB.templates=[];
+        if(!DB.templates.find(x=>x.id===t.id)) DB.templates.push(t);
+      });
+      if(!DB.emailTemplates||!DB.emailTemplates.length) DB.emailTemplates=defaultDB().emailTemplates;
+      if(!DB.stats) DB.stats=[];
+      if(!DB.shootings) DB.shootings=[];
+      persist();
+      document.getElementById('sb-info').textContent = DB.photographer.name ? '👤 '+DB.photographer.name : '⚠ Profil ausfüllen';
+      go('dashboard');
+      showToast('✓ Backup erfolgreich geladen');
+    } catch(err) {
+      alert('❌ Fehler beim Lesen der Datei: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+}
+
+// ── TOAST ────────────────────────────────────────────────────────────────────
+function showToast(msg, duration=3000) {
+  let t = document.getElementById('app-toast');
+  if(!t) {
+    t = document.createElement('div');
+    t.id = 'app-toast';
+    t.style.cssText = 'position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(16px);background:var(--card);border:1px solid var(--accent);color:var(--accent);padding:10px 22px;border-radius:var(--rs);font-size:13px;font-family:"Jost",sans-serif;font-weight:500;z-index:9999;opacity:0;transition:opacity .22s,transform .22s;pointer-events:none;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,.4)';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.opacity = '1';
+  t.style.transform = 'translateX(-50%) translateY(0)';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => {
+    t.style.opacity = '0';
+    t.style.transform = 'translateX(-50%) translateY(16px)';
+  }, duration);
+}
+
+renderDashboard();
+updateSidebarLogo();
+</script>
+
+<script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then(reg => console.log('SW registered:', reg.scope))
+      .catch(err => console.log('SW error:', err));
+  });
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,77 @@
+# TfP Manager – PWA Installation
+
+## Schritt-für-Schritt Anleitung (GitHub Pages – kostenlos)
+
+### 1. GitHub Account erstellen
+→ https://github.com/signup (kostenlos, 2 Minuten)
+
+### 2. Neues Repository erstellen
+- Auf github.com oben rechts auf "+" → "New repository"
+- Name: `tfp-manager` (oder beliebiger Name)
+- Auf "Public" stellen
+- Auf "Create repository" klicken
+
+### 3. Dateien hochladen
+- Im Repository auf "uploading an existing file" klicken
+- ALLE Dateien aus diesem Ordner hochladen:
+  - index.html
+  - manifest.json
+  - sw.js
+  - Ordner "icons" mit allen icon-*.png Dateien
+- Auf "Commit changes" klicken
+
+### 4. GitHub Pages aktivieren
+- Im Repository auf "Settings" klicken
+- Links im Menü "Pages" auswählen
+- Unter "Branch" → "main" auswählen → Speichern
+- Nach 2-3 Minuten ist die App erreichbar unter:
+  https://DEIN-USERNAME.github.io/tfp-manager/
+
+---
+
+## App auf iPhone installieren (iOS Safari)
+
+1. Link in **Safari** öffnen (nicht Chrome!)
+2. Unten auf das **Teilen-Symbol** tippen (Quadrat mit Pfeil)
+3. **"Zum Home-Bildschirm"** antippen
+4. Namen bestätigen → **"Hinzufügen"**
+5. ✅ App erscheint auf dem Homescreen wie eine echte App!
+
+---
+
+## App auf Android installieren (Chrome)
+
+1. Link in **Chrome** öffnen
+2. Oben rechts auf **⋮ Menü** tippen
+3. **"App installieren"** oder **"Zum Startbildschirm hinzufügen"**
+4. Bestätigen → **"Installieren"**
+5. ✅ App erscheint auf dem Homescreen!
+
+---
+
+## Wichtige Hinweise
+
+- Die App funktioniert auch **offline** (nach dem ersten Laden)
+- Alle Daten bleiben **lokal auf dem Gerät** gespeichert
+- Nach Updates: Im Browser die Seite neu laden → App aktualisiert sich
+- Daten können per **Export** gesichert und auf anderen Geräten per **Import** geladen werden
+
+---
+
+## Service Worker Hinweis für GitHub Pages
+
+Da GitHub Pages unter einem Unterordner liegt (/tfp-manager/), 
+muss in sw.js und manifest.json der Pfad angepasst werden:
+
+In manifest.json:
+  "start_url": "/tfp-manager/index.html"
+
+In sw.js (STATIC_ASSETS):
+  '/tfp-manager/index.html',
+  '/tfp-manager/manifest.json'
+
+Oder einfach ein eigenes Repository verwenden, dann ist alles unter /
+
+---
+
+Erstellt mit TfP Manager | Alexander Scherer | info@alexander-scherer.com
