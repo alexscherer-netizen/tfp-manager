@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>TfP Manager</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#0c0c14;--surface:#12121f;--card:#181829;--border:#2a2a42;--border-light:#1e1e32;--accent:#c8a96e;--accent-dim:rgba(200,169,110,.08);--accent-mid:rgba(200,169,110,.18);--text:#e8e2d6;--muted:#7a7a96;--dim:#4a4a62;--danger:#c85858;--danger-dim:rgba(200,88,88,.1);--success:#5ec48a;--success-dim:rgba(94,196,138,.1);--warn:#d4924a;--warn-dim:rgba(212,146,74,.1);--info:#5a9fd4;--info-dim:rgba(90,159,212,.1);--sw:230px;--r:10px;--rs:6px}
@@ -112,6 +114,22 @@ canvas.sig-pad{display:block;width:100%;border:1px dashed var(--border);border-r
 .km-status{font-size:12px;margin-top:6px}
 .km-ok{color:var(--success)}
 .km-err{color:var(--danger)}
+/* ── ROUTE MAP ── */
+#route-map{height:280px;width:100%;border-radius:var(--rs);border:1px solid var(--border);margin-top:10px;display:none;background:var(--surface)}
+#route-map.visible{display:block}
+.leaflet-container{background:#1a1a2e!important;font-family:'Jost',sans-serif!important}
+.leaflet-popup-content-wrapper{background:var(--card)!important;color:var(--text)!important;border-radius:var(--rs)!important;border:1px solid var(--border)!important}
+.leaflet-popup-tip{background:var(--card)!important;border:1px solid var(--border)!important}
+.leaflet-popup-content{font-size:12.5px!important;margin:10px 14px!important}
+.leaflet-bar a{background:var(--card)!important;color:var(--text)!important;border-color:var(--border)!important}
+.leaflet-bar a:hover{background:var(--surface)!important}
+.leaflet-control-attribution{background:rgba(24,24,41,.85)!important;color:var(--dim)!important;font-size:9px!important}
+.leaflet-control-attribution a{color:var(--muted)!important}
+.route-summary{display:flex;gap:16px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);padding:10px 14px;margin-top:8px;font-size:12.5px;display:none}
+.route-summary.visible{display:flex}
+.route-stat{display:flex;flex-direction:column;gap:2px}
+.route-stat-label{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--dim)}
+.route-stat-val{font-weight:600;color:var(--accent)}
 /* ── PRIVACY MODE ── */
 .privacy-btn{display:flex;align-items:center;gap:8px;width:calc(100% - 20px);margin:0 10px 10px;padding:9px 12px;border-radius:var(--rs);border:1px solid var(--border);background:transparent;color:var(--muted);font-size:12.5px;font-family:'Jost',sans-serif;cursor:pointer;transition:all .18s;letter-spacing:.02em}
 .privacy-btn:hover{background:var(--warn-dim);border-color:var(--warn);color:var(--warn)}
@@ -318,6 +336,8 @@ canvas.sig-pad{display:block;width:100%;border:1px dashed var(--border);border-r
           <button class="btn btn-outline" id="km-btn" onclick="autoKm()">📍 Route berechnen</button>
         </div>
         <div class="km-status" id="km-msg"></div>
+        <div class="route-summary" id="route-summary"></div>
+        <div id="route-map"></div>
       </div>
       <div class="field"><label class="field-label">Vertragstext</label><textarea id="nc-body" rows="10"></textarea></div>
     </div>
@@ -371,9 +391,59 @@ canvas.sig-pad{display:block;width:100%;border:1px dashed var(--border);border-r
       <div class="sep" style="margin:4px 0"></div>
       <div class="field">
         <label class="field-label">Logo (wird in Sidebar & PDF angezeigt)</label>
-        <div id="logo-preview-wrap" style="display:none;margin-bottom:10px">
-          <img id="logo-preview" style="max-height:80px;max-width:240px;border:1px solid var(--border);border-radius:var(--rs);padding:8px;background:var(--surface);display:block">
-          <button onclick="removeLogo()" class="btn btn-ghost btn-xs" style="margin-top:8px;color:var(--danger);border-color:var(--danger)">× Logo entfernen</button>
+        <div id="logo-preview-wrap" style="display:none;margin-bottom:12px">
+          <div style="display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap">
+            <div>
+              <div style="font-size:10px;color:var(--dim);margin-bottom:4px;text-transform:uppercase;letter-spacing:.08em">Vorschau dunkel</div>
+              <img id="logo-preview" style="max-height:70px;max-width:200px;border:1px solid var(--border);border-radius:var(--rs);padding:8px;background:var(--surface);display:block">
+            </div>
+            <div>
+              <div style="font-size:10px;color:var(--dim);margin-bottom:4px;text-transform:uppercase;letter-spacing:.08em">Vorschau hell (PDF)</div>
+              <img id="logo-preview-light" style="max-height:70px;max-width:200px;border:1px solid var(--border);border-radius:var(--rs);padding:8px;background:#ffffff;display:block">
+            </div>
+          </div>
+
+          <!-- Bearbeitungs-Werkzeuge -->
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);padding:14px;margin-top:12px">
+            <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:600;margin-bottom:12px">Logo bearbeiten</div>
+
+            <div style="display:flex;flex-direction:column;gap:12px">
+              <!-- Hintergrund entfernen -->
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+                <div>
+                  <div style="font-size:12.5px;font-weight:500">Hintergrund entfernen</div>
+                  <div style="font-size:11px;color:var(--dim)">Entfernt weiße/helle Flächen automatisch</div>
+                </div>
+                <button class="btn btn-sm" onclick="removeLogoBackground()">🪄 Anwenden</button>
+              </div>
+
+              <div class="sep" style="margin:0"></div>
+
+              <!-- Farbe ändern -->
+              <div>
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px;flex-wrap:wrap">
+                  <div>
+                    <div style="font-size:12.5px;font-weight:500">Logo-Farbe ändern</div>
+                    <div style="font-size:11px;color:var(--dim)">Färbt alle sichtbaren Bereiche ein</div>
+                  </div>
+                  <input type="color" id="logo-color" value="#c8a96e" style="width:44px;height:32px;padding:2px;border-radius:var(--rs);border:1px solid var(--border);background:var(--surface);cursor:pointer">
+                </div>
+                <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+                  <button class="btn btn-xs" onclick="setLogoColor('#c8a96e')" style="background:#c8a96e;color:#0c0c14;border-color:#c8a96e">Gold</button>
+                  <button class="btn btn-xs" onclick="setLogoColor('#ffffff')" style="background:#ffffff;color:#0c0c14;border-color:#ffffff">Weiß</button>
+                  <button class="btn btn-xs" onclick="setLogoColor('#1a1826')" style="background:#1a1826;color:#e8e2d6;border-color:#444">Schwarz</button>
+                  <button class="btn btn-xs" onclick="applyLogoColor()">🎨 Farbe anwenden</button>
+                </div>
+              </div>
+
+              <div class="sep" style="margin:0"></div>
+
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <button class="btn btn-ghost btn-xs" onclick="restoreOriginalLogo()">↺ Original wiederherstellen</button>
+                <button onclick="removeLogo()" class="btn btn-ghost btn-xs" style="color:var(--danger);border-color:var(--danger)">× Logo entfernen</button>
+              </div>
+            </div>
+          </div>
         </div>
         <div style="display:flex;gap:8px;align-items:center">
           <label style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;padding:8px 14px;background:var(--accent-dim);border:1px solid rgba(200,169,110,.3);border-radius:var(--rs);color:var(--accent);font-size:12.5px;font-weight:500;transition:background .15s" onmouseover="this.style.background='var(--accent-mid)'" onmouseout="this.style.background='var(--accent-dim)'">
@@ -712,6 +782,27 @@ function fill(text,c,p){
   return text.replace(/{{photographer_name}}/g,p.name||'').replace(/{{photographer_email}}/g,p.email||'').replace(/{{photographer_address}}/g,p.address||'').replace(/{{model_name}}/g,c.modelName||'').replace(/{{model_email}}/g,c.modelEmail||'').replace(/{{model_address}}/g,c.modelAddress||'').replace(/{{mua_name}}/g,c.muaName||'').replace(/{{mua_email}}/g,c.muaEmail||'').replace(/{{shoot_date}}/g,fmtDate(c.shootDate)).replace(/{{contract_date}}/g,fmtDate(c.contractDate)).replace(/{{location}}/g,c.location||'').replace(/{{distance_km}}/g,(c.distanceKm!=null&&c.distanceKm!=='')?(c.distanceKm):'–');
 }
 
+// Wie fill(), aber maskiert personenbezogene Daten wenn Sichtschutz aktiv ist.
+// Wird NUR für die Bildschirmanzeige verwendet – PDF-Export nutzt weiterhin fill().
+function fillMasked(text,c,p){
+  if(!text)return'';
+  p=p||DB.photographer;c=c||{};
+  if(!privacyOn) return fill(text,c,p);
+  return text
+    .replace(/{{photographer_name}}/g,maskName(p.name||''))
+    .replace(/{{photographer_email}}/g,maskEmail(p.email||''))
+    .replace(/{{photographer_address}}/g,maskAddr(p.address||''))
+    .replace(/{{model_name}}/g,maskName(c.modelName||''))
+    .replace(/{{model_email}}/g,maskEmail(c.modelEmail||''))
+    .replace(/{{model_address}}/g,maskAddr(c.modelAddress||''))
+    .replace(/{{mua_name}}/g,maskName(c.muaName||''))
+    .replace(/{{mua_email}}/g,maskEmail(c.muaEmail||''))
+    .replace(/{{shoot_date}}/g,fmtDate(c.shootDate))
+    .replace(/{{contract_date}}/g,fmtDate(c.contractDate))
+    .replace(/{{location}}/g,maskAddr(c.location||''))
+    .replace(/{{distance_km}}/g,(c.distanceKm!=null&&c.distanceKm!=='')?(c.distanceKm):'–');
+}
+
 const RENDERS={dashboard:renderDashboard,contracts:renderContracts,'new-contract':initNewContract,contacts:renderContacts,templates:renderTemplates,'email-tpl':renderEmailTpls,stats:renderStats,settings:initSettings,impressum:()=>{},planung:renderPlanung};
 function go(id){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
@@ -776,12 +867,14 @@ function selectC(id,el){
 function renderCDetail(c){
   const p=DB.photographer;const done=c.sigP&&c.sigM;
   const sigH=(who,sig,name,at)=>{
-    const label=who==='p'?`Fotograf/in · ${p.name||'–'}`:`Model · ${pTag(maskName(c.modelName||'–'))}`;
+    const label=who==='p'?'Fotograf/in · '+pTag(maskName(p.name||'–')):'Model · '+pTag(maskName(c.modelName||'–'));
     const btnL=who==='p'?'✍ Fotograf unterschreiben':'✍ Model unterschreiben';
-    if(sig)return`<div class="sig-box"><div class="sig-role-label">${label}</div><img src="${sig}" class="sig-img-preview" alt="sig"><div class="sig-timestamp">${new Date(at).toLocaleString('de-DE')}</div><button class="btn btn-ghost btn-xs" style="margin-top:8px" onclick="openSigModal('${who}','${c.id}')">Neu unterschreiben</button></div>`;
-    return`<div class="sig-box"><div class="sig-role-label">${label}</div><button class="btn btn-outline btn-sm" style="width:100%;margin-top:8px" onclick="openSigModal('${who}','${c.id}')">${btnL}</button></div>`;
+    const sigStyle=privacyOn?'filter:blur(5px);':'';
+    if(sig)return'<div class="sig-box"><div class="sig-role-label">'+label+'</div><img src="'+sig+'" class="sig-img-preview" alt="sig" style="'+sigStyle+'"><div class="sig-timestamp">'+new Date(at).toLocaleString('de-DE')+'</div><button class="btn btn-ghost btn-xs" style="margin-top:8px" onclick="openSigModal(\''+who+'\',\''+c.id+'\')">Neu unterschreiben</button></div>';
+    return'<div class="sig-box"><div class="sig-role-label">'+label+'</div><button class="btn btn-outline btn-sm" style="width:100%;margin-top:8px" onclick="openSigModal(\''+who+'\',\''+c.id+'\')">'+btnL+'</button></div>';
   };
   document.getElementById('cdetail').innerHTML=`
+    ${privacyOn?'<div style="background:var(--warn-dim);border:1px solid rgba(212,146,74,.3);border-radius:var(--rs);padding:8px 14px;margin-bottom:12px;font-size:12px;color:var(--warn);display:flex;align-items:center;gap:8px">🔒 Sichtschutz aktiv – personenbezogene Daten sind maskiert. PDF-Export enthält weiterhin die echten Daten.</div>':''}
     <div class="btn-row" style="margin-bottom:14px">
       <button class="btn btn-outline btn-sm" onclick="exportPDF('${c.id}')">📄 PDF öffnen / Drucken</button>
       <button class="btn btn-sm" onclick="openEmailSend('${c.id}')">✉ E-Mail senden</button>
@@ -794,7 +887,7 @@ function renderCDetail(c){
         <div><span style="color:var(--muted)">Location:</span> ${pTag(maskAddr(c.location||'–'))}</div>
         <div><span style="color:var(--muted)">Distanz:</span> ${c.distanceKm!=null?c.distanceKm+' km':'–'}</div>
       </div>
-      <pre class="contract-body-pre">${fill(c.contractBody,c,p)}</pre>
+      <pre class="contract-body-pre">${fillMasked(c.contractBody,c,p)}</pre>
     </div>
     <div class="card">
       <div class="card-title">Unterschriften</div>
@@ -877,6 +970,7 @@ function initNewContract(){
   document.getElementById('nc-sd').value=td;document.getElementById('nc-cd').value=td;
   ['nc-mn','nc-me','nc-ma','nc-muaname','nc-muaemail','nc-loc','nc-km'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   document.getElementById('km-msg').textContent='';document.getElementById('km-msg').className='km-status';
+  hideRouteMap();
   const tsel=document.getElementById('nc-tpl');
   tsel.innerHTML=DB.templates.map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
   loadTplText();
@@ -885,23 +979,122 @@ function initNewContract(){
 }
 function loadTplText(){const id=document.getElementById('nc-tpl').value;const t=DB.templates.find(x=>x.id===id);if(t)document.getElementById('nc-body').value=t.body;}
 function fillFromContact(){const id=document.getElementById('nc-contact').value;if(!id)return;const c=DB.contacts.find(x=>x.id===id);if(!c)return;document.getElementById('nc-mn').value=c.name||'';document.getElementById('nc-me').value=c.email||'';document.getElementById('nc-ma').value=c.address||'';}
-function resetKm(){document.getElementById('nc-km').value='';document.getElementById('km-msg').textContent='';document.getElementById('km-msg').className='km-status';}
+function resetKm(){
+  document.getElementById('nc-km').value='';
+  document.getElementById('km-msg').textContent='';
+  document.getElementById('km-msg').className='km-status';
+  hideRouteMap();
+}
+
+let routeMap=null, routeLayer=null;
+
+function hideRouteMap(){
+  document.getElementById('route-map').classList.remove('visible');
+  document.getElementById('route-summary').classList.remove('visible');
+}
 
 async function autoKm(){
-  const p=DB.photographer;const loc=document.getElementById('nc-loc').value.trim();
-  const msg=document.getElementById('km-msg');const btn=document.getElementById('km-btn');
-  if(!p.homeCity){msg.textContent='⚠ Bitte zuerst Heimatstadt im Profil eintragen.';msg.className='km-status km-err';return;}
-  if(!loc){msg.textContent='⚠ Bitte zuerst eine Location eintragen.';msg.className='km-status km-err';return;}
-  btn.textContent='⏳ Berechne…';btn.disabled=true;msg.textContent='';msg.className='km-status';
+  const p=DB.photographer;
+  const loc=document.getElementById('nc-loc').value.trim();
+  const msg=document.getElementById('km-msg');
+  const btn=document.getElementById('km-btn');
+  if(!p.homeCity){msg.textContent='\u26A0 Bitte zuerst Heimatstadt im Profil eintragen.';msg.className='km-status km-err';return;}
+  if(!loc){msg.textContent='\u26A0 Bitte zuerst eine Location eintragen.';msg.className='km-status km-err';return;}
+  btn.textContent='\u23F3 Berechne\u2026';btn.disabled=true;
+  msg.textContent='';msg.className='km-status';
+  hideRouteMap();
   try{
-    const km=await calcRoute(p.homeCity,loc);
-    document.getElementById('nc-km').value=km;
-    msg.textContent=`✓ ${km} km – direkte Fahrtstrecke (OpenStreetMap / OSRM)`;msg.className='km-status km-ok';
-  }catch(e){msg.textContent='✗ Fehler: '+e.message;msg.className='km-status km-err';}
-  btn.textContent='📍 Route berechnen';btn.disabled=false;
+    const result=await calcRoute(p.homeCity,loc);
+    document.getElementById('nc-km').value=result.km;
+    msg.textContent='\u2713 '+result.km+' km \u2013 direkte Fahrtstrecke (OpenStreetMap / OSRM)';
+    msg.className='km-status km-ok';
+    showRouteMap(result);
+  }catch(e){
+    msg.textContent='\u2717 Fehler: '+e.message;
+    msg.className='km-status km-err';
+  }
+  btn.textContent='\uD83D\uDCCD Route berechnen';btn.disabled=false;
 }
-async function geocode(place){const r=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(place)}&format=json&limit=1`,{headers:{'Accept-Language':'de'}});const d=await r.json();if(!d.length)throw new Error(`Ort nicht gefunden: "${place}"`);return{lat:parseFloat(d[0].lat),lon:parseFloat(d[0].lon)};}
-async function calcRoute(from,to){const[a,b]=await Promise.all([geocode(from),geocode(to)]);const r=await fetch(`https://router.project-osrm.org/route/v1/driving/${a.lon},${a.lat};${b.lon},${b.lat}?overview=false`);const d=await r.json();if(d.code!=='Ok')throw new Error('Route konnte nicht berechnet werden.');return Math.round(d.routes[0].distance/1000);}
+
+async function geocode(place){
+  const r=await fetch('https://nominatim.openstreetmap.org/search?q='+encodeURIComponent(place)+'&format=json&limit=1',{headers:{'Accept-Language':'de'}});
+  const d=await r.json();
+  if(!d.length)throw new Error('Ort nicht gefunden: "'+place+'"');
+  return{lat:parseFloat(d[0].lat),lon:parseFloat(d[0].lon),name:d[0].display_name};
+}
+
+async function calcRoute(from,to){
+  const[a,b]=await Promise.all([geocode(from),geocode(to)]);
+  const url='https://router.project-osrm.org/route/v1/driving/'+a.lon+','+a.lat+';'+b.lon+','+b.lat+'?overview=full&geometries=geojson';
+  const r=await fetch(url);
+  const d=await r.json();
+  if(d.code!=='Ok')throw new Error('Route konnte nicht berechnet werden.');
+  const route=d.routes[0];
+  return{
+    km:Math.round(route.distance/1000),
+    durationMin:Math.round(route.duration/60),
+    geometry:route.geometry,
+    start:a,
+    end:b
+  };
+}
+
+function showRouteMap(result){
+  const mapEl=document.getElementById('route-map');
+  const sumEl=document.getElementById('route-summary');
+  mapEl.classList.add('visible');
+  sumEl.classList.add('visible');
+
+  // Summary
+  const hrs=Math.floor(result.durationMin/60);
+  const mins=result.durationMin%60;
+  const timeStr=hrs>0?hrs+' Std '+mins+' Min':mins+' Min';
+  sumEl.innerHTML=
+     '<div class="route-stat"><span class="route-stat-label">Strecke einfach</span><span class="route-stat-val">'+result.km+' km</span></div>'
+    +'<div class="route-stat"><span class="route-stat-label">Hin &amp; R\u00FCck</span><span class="route-stat-val">'+(result.km*2)+' km</span></div>'
+    +'<div class="route-stat"><span class="route-stat-label">Fahrzeit ca.</span><span class="route-stat-val">'+timeStr+'</span></div>';
+
+  // Init map once
+  if(!routeMap){
+    routeMap=L.map('route-map',{scrollWheelZoom:false,attributionControl:true});
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{
+      attribution:'&copy; OpenStreetMap, &copy; CARTO',
+      maxZoom:19
+    }).addTo(routeMap);
+  }
+  // Clear old route
+  if(routeLayer){routeMap.removeLayer(routeLayer);}
+
+  routeLayer=L.layerGroup().addTo(routeMap);
+
+  // Draw route line
+  const coords=result.geometry.coordinates.map(c=>[c[1],c[0]]);
+  const line=L.polyline(coords,{color:'#c8a96e',weight:4,opacity:0.9,lineJoin:'round'}).addTo(routeLayer);
+
+  // Start marker (photographer)
+  const startIcon=L.divIcon({
+    className:'',
+    html:'<div style="background:#5ec48a;width:26px;height:26px;border-radius:50%;border:3px solid #0c0c14;box-shadow:0 2px 8px rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;font-size:13px">\uD83C\uDFE0</div>',
+    iconSize:[26,26],iconAnchor:[13,13]
+  });
+  L.marker([result.start.lat,result.start.lon],{icon:startIcon}).addTo(routeLayer)
+    .bindPopup('<strong>Start</strong><br>'+DB.photographer.homeCity);
+
+  // End marker (location)
+  const endIcon=L.divIcon({
+    className:'',
+    html:'<div style="background:#c8a96e;width:26px;height:26px;border-radius:50%;border:3px solid #0c0c14;box-shadow:0 2px 8px rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;font-size:13px">\uD83D\uDCF7</div>',
+    iconSize:[26,26],iconAnchor:[13,13]
+  });
+  L.marker([result.end.lat,result.end.lon],{icon:endIcon}).addTo(routeLayer)
+    .bindPopup('<strong>Shooting</strong><br>'+document.getElementById('nc-loc').value);
+
+  // Fit bounds
+  setTimeout(()=>{
+    routeMap.invalidateSize();
+    routeMap.fitBounds(line.getBounds(),{padding:[30,30]});
+  },100);
+}
 
 function saveContract(){
   const mn=document.getElementById('nc-mn').value.trim();if(!mn){alert('Bitte Model-Name eintragen.');return;}
@@ -1019,11 +1212,7 @@ function initSettings(){
   document.getElementById('p-city').value=p.homeCity||'';
   document.getElementById('p-email').value=p.email||'';
   document.getElementById('p-msg').style.display='none';
-  // Show logo preview if exists
-  const wrap=document.getElementById('logo-preview-wrap');
-  const img=document.getElementById('logo-preview');
-  if(p.logo){wrap.style.display='block';img.src=p.logo;}
-  else{wrap.style.display='none';img.src='';}
+  refreshLogoPreviews();
 }
 
 function handleLogoUpload(event){
@@ -1034,20 +1223,133 @@ function handleLogoUpload(event){
   reader.onload=e=>{
     const data=e.target.result;
     DB.photographer.logo=data;
+    DB.photographer.logoOriginal=data;  // Original für "Wiederherstellen" merken
     persist();
-    document.getElementById('logo-preview').src=data;
-    document.getElementById('logo-preview-wrap').style.display='block';
+    refreshLogoPreviews();
     updateSidebarLogo();
     showToast('✓ Logo gespeichert');
   };
   reader.readAsDataURL(file);
 }
 
+function refreshLogoPreviews(){
+  const p=DB.photographer;
+  const wrap=document.getElementById('logo-preview-wrap');
+  if(!wrap)return;
+  if(p.logo){
+    wrap.style.display='block';
+    document.getElementById('logo-preview').src=p.logo;
+    const light=document.getElementById('logo-preview-light');
+    if(light)light.src=p.logo;
+  }else{
+    wrap.style.display='none';
+  }
+}
+
+// Lädt das aktuelle Logo in ein Canvas und gibt Context + Canvas zurück
+function loadLogoToCanvas(callback){
+  const p=DB.photographer;
+  if(!p.logo){alert('Kein Logo vorhanden.');return;}
+  const img=new Image();
+  img.onload=()=>{
+    const canvas=document.createElement('canvas');
+    canvas.width=img.naturalWidth;
+    canvas.height=img.naturalHeight;
+    const ctx=canvas.getContext('2d');
+    ctx.drawImage(img,0,0);
+    callback(canvas,ctx);
+  };
+  img.onerror=()=>alert('Logo konnte nicht geladen werden. SVG-Dateien können nicht bearbeitet werden – bitte PNG oder JPG verwenden.');
+  img.src=p.logo;
+}
+
+// Entfernt weiße/helle Hintergrundflächen
+function removeLogoBackground(){
+  loadLogoToCanvas((canvas,ctx)=>{
+    const w=canvas.width,h=canvas.height;
+    const imgData=ctx.getImageData(0,0,w,h);
+    const d=imgData.data;
+
+    // Referenzfarbe: Eckpixel (meist Hintergrund)
+    const corners=[
+      [0,0],[w-1,0],[0,h-1],[w-1,h-1]
+    ].map(([x,y])=>{
+      const i=(y*w+x)*4;
+      return [d[i],d[i+1],d[i+2]];
+    });
+    // Durchschnitt der Ecken als Hintergrundfarbe
+    const bg=[0,1,2].map(ch=>Math.round(corners.reduce((s,c)=>s+c[ch],0)/corners.length));
+
+    const tolerance=60;  // Toleranz für Farbabweichung
+    let removed=0;
+
+    for(let i=0;i<d.length;i+=4){
+      const dr=d[i]-bg[0], dg=d[i+1]-bg[1], db=d[i+2]-bg[2];
+      const dist=Math.sqrt(dr*dr+dg*dg+db*db);
+      if(dist<tolerance){
+        // Weicher Übergang am Rand der Toleranz
+        const alpha=Math.max(0,Math.min(255,(dist/tolerance)*255));
+        d[i+3]=Math.round(alpha);
+        if(alpha<128)removed++;
+      }
+    }
+
+    ctx.putImageData(imgData,0,0);
+    DB.photographer.logo=canvas.toDataURL('image/png');
+    persist();
+    refreshLogoPreviews();
+    updateSidebarLogo();
+    showToast('✓ Hintergrund entfernt ('+Math.round(removed/(w*h)*100)+'% transparent)');
+  });
+}
+
+function setLogoColor(hex){
+  document.getElementById('logo-color').value=hex;
+}
+
+// Färbt alle sichtbaren (nicht-transparenten) Pixel in die gewählte Farbe
+function applyLogoColor(){
+  const hex=document.getElementById('logo-color').value;
+  const r=parseInt(hex.slice(1,3),16);
+  const g=parseInt(hex.slice(3,5),16);
+  const b=parseInt(hex.slice(5,7),16);
+
+  loadLogoToCanvas((canvas,ctx)=>{
+    const imgData=ctx.getImageData(0,0,canvas.width,canvas.height);
+    const d=imgData.data;
+    for(let i=0;i<d.length;i+=4){
+      if(d[i+3]>10){  // Nur sichtbare Pixel einfärben
+        d[i]=r; d[i+1]=g; d[i+2]=b;
+        // Alpha bleibt erhalten für weiche Kanten
+      }
+    }
+    ctx.putImageData(imgData,0,0);
+    DB.photographer.logo=canvas.toDataURL('image/png');
+    persist();
+    refreshLogoPreviews();
+    updateSidebarLogo();
+    showToast('✓ Logo-Farbe geändert');
+  });
+}
+
+function restoreOriginalLogo(){
+  const p=DB.photographer;
+  if(!p.logoOriginal){showToast('Kein Original gespeichert');return;}
+  p.logo=p.logoOriginal;
+  persist();
+  refreshLogoPreviews();
+  updateSidebarLogo();
+  showToast('↺ Original wiederhergestellt');
+}
+
 function removeLogo(){
   DB.photographer.logo=null;
+  DB.photographer.logoOriginal=null;
   persist();
   document.getElementById('logo-preview-wrap').style.display='none';
   document.getElementById('logo-preview').src='';
+  const light=document.getElementById('logo-preview-light');
+  if(light)light.src='';
   document.getElementById('logo-input').value='';
   updateSidebarLogo();
   showToast('Logo entfernt');
@@ -1131,6 +1433,7 @@ function togglePrivacy(){
     if(id==='dashboard')renderDashboard();
     if(id==='contacts')renderContacts();
     if(id==='contracts')renderContracts();
+    if(id==='planung')renderPlanung();
   }
 }
 document.addEventListener('keydown',e=>{if(e.key==='F2')togglePrivacy();});
@@ -1219,7 +1522,7 @@ function renderCalendar() {
     const hasShooting = dayShootings.length > 0;
     const dots = dayShootings.slice(0,2).map(s => {
       const dotColor = s.status==='confirmed' ? 'var(--success)' : s.status==='cancelled' ? 'var(--danger)' : 'var(--warn)';
-      return '<div style="color:'+dotColor+';font-size:9px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(s.title||'Shooting')+'</div>';
+      return '<div style="color:'+dotColor+';font-size:9px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(privacyOn?maskName(s.title||'Shooting'):(s.title||'Shooting'))+'</div>';
     }).join('');
     html += `<div class="cal-day${isOther?' other-month':''}${isToday?' today':''}${hasShooting?' has-shooting':''}" onclick="calDayClick('${dateStr}')">
       <div class="cal-dn">${day}</div>
@@ -1283,7 +1586,7 @@ function renderShootingList() {
     const notesEl = s.notes ? '<div class="shooting-meta" style="margin-top:2px;font-style:italic">'+s.notes.slice(0,60)+(s.notes.length>60?'\u2026':'')+'</div>' : '';
     const pastStyle = isPast ? 'opacity:0.5;' : '';
 
-    html += '<div class="shooting-item" style="margin-bottom:6px;'+pastStyle+'" onclick="openShootingModal(\''+s.id+'\')">'      +'<div class="shooting-date-box"><div class="shooting-day">'+dayNum+'</div><div class="shooting-month">'+mon+'</div></div>'      +'<div class="shooting-info">'      +'<div class="shooting-title">'+(s.title||'Shooting')+'</div>'      +'<div class="shooting-meta">'+(s.time?s.time+' · ':'')+(s.location||'Kein Ort')+(urgency?' · '+urgency:'')+'</div>'      +notesEl+reminderEl      +'</div>'      +'<div class="status-dot '+(STATUS_CLASS[s.status]||'status-open')+'" title="'+(STATUS_LABEL[s.status]||'Offen')+'"></div>'      +'</div>';
+    html += '<div class="shooting-item" style="margin-bottom:6px;'+pastStyle+'" onclick="openShootingModal(\''+s.id+'\')">'      +'<div class="shooting-date-box"><div class="shooting-day">'+dayNum+'</div><div class="shooting-month">'+mon+'</div></div>'      +'<div class="shooting-info">'      +'<div class="shooting-title">'+pTag(maskName(s.title||'Shooting'))+'</div>'      +'<div class="shooting-meta">'+(s.time?s.time+' · ':'')+pTag(maskAddr(s.location||'Kein Ort'))+(urgency?' · '+urgency:'')+'</div>'      +notesEl+reminderEl      +'</div>'      +'<div class="status-dot '+(STATUS_CLASS[s.status]||'status-open')+'" title="'+(STATUS_LABEL[s.status]||'Offen')+'"></div>'      +'</div>';
   });
 
   el.innerHTML = html;
