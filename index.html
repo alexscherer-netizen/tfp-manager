@@ -337,7 +337,7 @@ canvas.sig-pad{display:block;width:100%;border:1px dashed var(--border);border-r
         <div class="field"><label class="field-label">MUA E-Mail (optional)</label><input type="email" id="nc-muaemail"></div>
       </div>
       <div class="form-row">
-        <div class="field"><label class="field-label">Shooting-Datum</label><input type="date" id="nc-sd"></div>
+        <div class="field"><label class="field-label">Shooting-Datum</label><input type="date" id="nc-sd" onchange="updateAgeDisplay()"></div>
         <div class="field"><label class="field-label">Vertragsdatum</label><input type="date" id="nc-cd"></div>
       </div>
       <div class="field"><label class="field-label">Shooting-Location</label><input type="text" id="nc-loc" placeholder="z.B. Tempelhofer Feld, Berlin" oninput="resetKm()"></div>
@@ -396,7 +396,7 @@ canvas.sig-pad{display:block;width:100%;border:1px dashed var(--border);border-r
         <div>
           <div class="field-label" style="margin-bottom:8px">§ 6 – Volljährigkeit & Identität</div>
           <div class="form-row">
-            <div class="field"><label class="field-label" style="font-size:10px">Geburtsdatum des Models</label><input type="date" id="rl-birthdate"></div>
+            <div class="field"><label class="field-label" style="font-size:10px">Geburtsdatum des Models</label><input type="date" id="rl-birthdate" onchange="updateAgeDisplay()" oninput="updateAgeDisplay()"><div id="age-display" style="font-size:12px;margin-top:5px;display:none"></div></div>
             <div class="field"><label class="field-label" style="font-size:10px">Ausweis geprüft am</label><input type="date" id="rl-idcheck"></div>
           </div>
         </div>
@@ -1120,6 +1120,8 @@ function initNewContract(){
   ['rl-artistname','rl-birthdate','rl-idcheck'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   const aw=document.getElementById('artist-name-wrap');
   if(aw)aw.style.display='none';
+  const ad=document.getElementById('age-display');
+  if(ad)ad.style.display='none';
   const tsel=document.getElementById('nc-tpl');
   tsel.innerHTML=DB.templates.map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
   loadTplText();
@@ -1133,6 +1135,51 @@ function loadTplText(){
   // Model-Release Optionen ein-/ausblenden
   const isRelease = t && /EINWILLIGUNGSERKL|Model Release/i.test(t.name + ' ' + (t.body||''));
   document.getElementById('release-options').style.display = isRelease ? 'block' : 'none';
+}
+
+// Berechnet das exakte Alter zum Shooting-Datum
+function calcAge(birthDate, refDate){
+  const b=new Date(birthDate);
+  const r=refDate?new Date(refDate):new Date();
+  if(isNaN(b.getTime()))return null;
+  let years=r.getFullYear()-b.getFullYear();
+  const mDiff=r.getMonth()-b.getMonth();
+  if(mDiff<0 || (mDiff===0 && r.getDate()<b.getDate())) years--;
+  // Zusätzlich Monate für Detailanzeige
+  let months=mDiff;
+  if(months<0)months+=12;
+  if(r.getDate()<b.getDate())months=months>0?months-1:11;
+  return {years, months};
+}
+
+function updateAgeDisplay(){
+  const bd=document.getElementById('rl-birthdate').value;
+  const el=document.getElementById('age-display');
+  if(!el)return;
+  if(!bd){el.style.display='none';return;}
+
+  const shootDate=document.getElementById('nc-sd').value||toDay();
+  const age=calcAge(bd, shootDate);
+  if(!age){el.style.display='none';return;}
+
+  el.style.display='block';
+
+  if(age.years<0){
+    el.innerHTML='<span style="color:var(--danger)">\u26A0 Geburtsdatum liegt in der Zukunft</span>';
+    return;
+  }
+
+  const ageStr=age.years+' Jahre'+(age.months>0?' und '+age.months+' Monate':'');
+
+  if(age.years<18){
+    el.innerHTML='<div style="background:var(--danger-dim);border:1px solid var(--danger);border-radius:var(--rs);padding:8px 12px;color:var(--danger);font-weight:500">'
+      +'\u26D4 <strong>'+ageStr+'</strong> \u2013 MINDERJ\u00C4HRIG!<br>'
+      +'<span style="font-weight:400;font-size:11px">Einwilligung der Erziehungsberechtigten zwingend erforderlich. TfP-Shootings mit Minderj\u00E4hrigen unterliegen besonderen rechtlichen Anforderungen.</span></div>';
+  } else if(age.years<21){
+    el.innerHTML='<span style="color:var(--warn)">\u26A0 <strong>'+ageStr+'</strong> alt am Shooting-Tag \u2013 Ausweis unbedingt pr\u00FCfen</span>';
+  } else {
+    el.innerHTML='<span style="color:var(--success)">\u2713 <strong>'+ageStr+'</strong> alt am Shooting-Tag \u2013 vollj\u00E4hrig</span>';
+  }
 }
 
 function toggleArtistField(){
@@ -1176,7 +1223,12 @@ function applyReleaseOptions(body){
   // § 6 Geburtsdatum & Ausweisprüfung
   const bd=(document.getElementById('rl-birthdate')||{}).value;
   const ic=(document.getElementById('rl-idcheck')||{}).value;
-  if(bd) body=body.replace(/Geburtsdatum: _+/, 'Geburtsdatum: '+fmtDate(bd));
+  if(bd){
+    const shootD=document.getElementById('nc-sd').value||toDay();
+    const age=calcAge(bd, shootD);
+    const ageTxt=age&&age.years>=0?' (Alter am Shooting-Tag: '+age.years+' Jahre)':'';
+    body=body.replace(/Geburtsdatum: _+/, 'Geburtsdatum: '+fmtDate(bd)+ageTxt);
+  }
   if(ic) body=body.replace(/Ausweisdokument geprüft am: _+/, 'Ausweisdokument geprüft am: '+fmtDate(ic));
 
   return body;
