@@ -475,6 +475,48 @@ canvas.sig-pad{display:block;width:100%;border:1px dashed var(--border);border-r
             <div class="field"><label class="field-label" style="font-size:10px">Dokumentart</label><input type="text" id="ak-doctype" placeholder="Personalausweis / Reisepass"></div>
             <div class="field"><label class="rl-check" style="margin-top:18px"><input type="checkbox" id="ak-copy"><span style="font-size:12px">Ausweiskopie angefertigt</span></label></div>
           </div>
+
+          <!-- AUSWEIS FOTOGRAFIEREN -->
+          <div style="margin-top:14px;background:var(--bg);border:1px solid var(--border);border-radius:var(--rs);padding:14px">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+              <div>
+                <div style="font-size:12.5px;font-weight:500">Ausweis vor Ort erfassen</div>
+                <div style="font-size:11px;color:var(--dim)">Wird verschl&uuml;sselt lokal gespeichert &ndash; nie hochgeladen</div>
+              </div>
+              <div style="display:flex;gap:6px">
+                <label class="btn btn-sm" style="cursor:pointer;margin:0">
+                  &#128247; Foto aufnehmen
+                  <input type="file" id="id-camera" accept="image/*" capture="environment" style="display:none" onchange="handleIdCapture(event)">
+                </label>
+              </div>
+            </div>
+
+            <div style="background:var(--warn-dim);border:1px solid rgba(212,146,74,.3);border-radius:var(--rs);padding:9px 12px;font-size:11px;color:var(--warn);line-height:1.7;margin-bottom:10px">
+              &#9888; <strong>&sect; 20 PAuswG:</strong> Ausweiskopien nur mit Einwilligung. Nicht ben&ouml;tigte Daten (Zugangsnummer, Seriennummer, Gr&ouml;&szlig;e, Augenfarbe) m&uuml;ssen geschw&auml;rzt werden. L&ouml;schung nach Zweckerreichung.
+            </div>
+
+            <div id="id-editor" style="display:none">
+              <div style="font-size:11px;color:var(--muted);margin-bottom:6px">Mit gedr&uuml;ckter Maus / Finger &uuml;ber sensible Bereiche ziehen zum Schw&auml;rzen:</div>
+              <canvas id="id-canvas" style="max-width:100%;border:1px solid var(--border);border-radius:var(--rs);cursor:crosshair;touch-action:none;display:block"></canvas>
+              <div class="btn-row" style="margin-top:8px">
+                <button class="btn btn-ghost btn-xs" onclick="undoIdRedaction()">&#8634; Letzte Schw&auml;rzung</button>
+                <button class="btn btn-ghost btn-xs" onclick="resetIdImage()">Alle Schw&auml;rzungen entfernen</button>
+                <button class="btn btn-primary btn-xs" onclick="saveIdImage()">&#10003; Speichern</button>
+                <button class="btn btn-ghost btn-xs" style="color:var(--danger);border-color:var(--danger)" onclick="deleteIdImage()">&times; Verwerfen</button>
+              </div>
+            </div>
+
+            <div id="id-saved" style="display:none">
+              <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+                <img id="id-thumb" style="max-height:70px;border:1px solid var(--success);border-radius:var(--rs)">
+                <div>
+                  <div style="font-size:12px;color:var(--success)">&#10003; Ausweisfoto gespeichert</div>
+                  <div style="font-size:10.5px;color:var(--dim)" id="id-savedate"></div>
+                  <button class="btn btn-ghost btn-xs" style="margin-top:5px;color:var(--danger);border-color:var(--danger)" onclick="deleteIdImage()">&times; L&ouml;schen</button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -1133,8 +1175,34 @@ function renderCDetail(c){
         ${sigH('m',c.sigM,c.modelName,c.sigMAt)}
       </div>
       ${done?'<div style="margin-top:14px"><span class="badge badge-ok">✓ Vollständig unterzeichnet – bereit für PDF-Export</span></div>':''}
-    </div>`;
+    </div>
+    ${c.idDocument?`<div class="card">
+      <div class="card-title">Ausweisdokumentation</div>
+      <div style="display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap">
+        <img src="${c.idDocument.data}" style="max-height:120px;border:1px solid var(--border);border-radius:var(--rs);${privacyOn?'filter:blur(10px);':''}" alt="Ausweis">
+        <div style="flex:1;min-width:180px">
+          <div style="font-size:12px;color:var(--muted);line-height:1.8">
+            Erfasst: ${new Date(c.idDocument.capturedAt).toLocaleString('de-DE')}<br>
+            Schwärzungen: ${c.idDocument.redactionCount||0}
+          </div>
+          <div style="background:var(--warn-dim);border:1px solid rgba(212,146,74,.3);border-radius:var(--rs);padding:8px 12px;margin-top:10px;font-size:11px;color:var(--warn);line-height:1.6">
+            ⚠ Nach Zweckerreichung löschen (§ 20 PAuswG). Nicht im PDF enthalten.
+          </div>
+          <button class="btn btn-danger btn-xs" style="margin-top:10px" onclick="deleteContractIdDoc('${c.id}')">× Ausweisfoto löschen</button>
+        </div>
+      </div>
+    </div>`:''}`;
 }
+function deleteContractIdDoc(id){
+  if(!confirm('Ausweisfoto endgültig aus diesem Vertrag löschen?\n\nDies kann nicht rückgängig gemacht werden.'))return;
+  const c=DB.contracts.find(x=>x.id===id);
+  if(!c)return;
+  c.idDocument=null;
+  persist();
+  renderCDetail(c);
+  showToast('Ausweisfoto gelöscht');
+}
+
 function deleteC(id){if(!confirm('Vertrag wirklich löschen?'))return;DB.contracts=DB.contracts.filter(c=>c.id!==id);DB.stats=DB.stats.filter(s=>s.contractId!==id);if(activeContractId===id)activeContractId=null;persist();renderContracts();}
 
 function exportPDF(id){
@@ -1227,6 +1295,9 @@ function initNewContract(){
   ['ak-artistname','ak-birthdate','ak-idcheck','ak-doctype'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   const akw=document.getElementById('ak-artist-wrap'); if(akw)akw.style.display='none';
   const aka2=document.getElementById('ak-age-display'); if(aka2)aka2.style.display='none';
+  pendingIdImage=null; idBaseImage=null; idRedactions=[];
+  const ide=document.getElementById('id-editor'); if(ide)ide.style.display='none';
+  const ids=document.getElementById('id-saved'); if(ids)ids.style.display='none';
   const tsel=document.getElementById('nc-tpl');
   tsel.innerHTML=DB.templates.map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
   loadTplText();
@@ -1243,6 +1314,137 @@ function loadTplText(){
   const isRelease = /EINWILLIGUNGSERKL|Model Release/i.test(combined) && !isAkt;
   document.getElementById('release-options').style.display = isRelease ? 'block' : 'none';
   document.getElementById('akt-options').style.display = isAkt ? 'block' : 'none';
+}
+
+// ── AUSWEIS-ERFASSUNG MIT SCHWÄRZUNG ─────────────────────────────────────────
+let idCanvas=null, idCtx=null, idBaseImage=null, idRedactions=[], idDrawing=false, idStart=null;
+let pendingIdImage=null;
+
+function handleIdCapture(event){
+  const file=event.target.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const img=new Image();
+    img.onload=()=>{
+      // Auf max 1200px Breite verkleinern (Speicher sparen)
+      const maxW=1200;
+      const scale=img.width>maxW?maxW/img.width:1;
+      const w=Math.round(img.width*scale), h=Math.round(img.height*scale);
+
+      idCanvas=document.getElementById('id-canvas');
+      idCanvas.width=w; idCanvas.height=h;
+      idCtx=idCanvas.getContext('2d');
+      idCtx.drawImage(img,0,0,w,h);
+      idBaseImage=idCanvas.toDataURL('image/jpeg',0.85);
+      idRedactions=[];
+
+      document.getElementById('id-editor').style.display='block';
+      document.getElementById('id-saved').style.display='none';
+      setupIdCanvasEvents();
+      showToast('Foto aufgenommen \u2013 sensible Bereiche jetzt schw\u00E4rzen');
+    };
+    img.src=e.target.result;
+  };
+  reader.readAsDataURL(file);
+  event.target.value='';
+}
+
+function setupIdCanvasEvents(){
+  const c=idCanvas;
+  if(c._wired)return;
+  c._wired=true;
+
+  const getPos=(e)=>{
+    const r=c.getBoundingClientRect();
+    const s=e.touches?e.touches[0]:e;
+    return{x:(s.clientX-r.left)*(c.width/r.width), y:(s.clientY-r.top)*(c.height/r.height)};
+  };
+
+  const start=(e)=>{e.preventDefault(); idDrawing=true; idStart=getPos(e,c);};
+  const move=(e)=>{
+    e.preventDefault();
+    if(!idDrawing||!idStart)return;
+    const p=getPos(e,c);
+    redrawIdCanvas();
+    idCtx.fillStyle='rgba(0,0,0,.75)';
+    idCtx.fillRect(idStart.x, idStart.y, p.x-idStart.x, p.y-idStart.y);
+  };
+  const end=(e)=>{
+    if(!idDrawing||!idStart)return;
+    idDrawing=false;
+    const p=getPos(e.changedTouches?e:e, c);
+    const rect={x:idStart.x, y:idStart.y, w:p.x-idStart.x, h:p.y-idStart.y};
+    if(Math.abs(rect.w)>4 && Math.abs(rect.h)>4) idRedactions.push(rect);
+    idStart=null;
+    redrawIdCanvas();
+  };
+
+  c.addEventListener('mousedown',start);
+  c.addEventListener('mousemove',move);
+  c.addEventListener('mouseup',end);
+  c.addEventListener('mouseleave',()=>{if(idDrawing){idDrawing=false;idStart=null;redrawIdCanvas();}});
+  c.addEventListener('touchstart',start,{passive:false});
+  c.addEventListener('touchmove',move,{passive:false});
+  c.addEventListener('touchend',end);
+}
+
+function redrawIdCanvas(){
+  if(!idBaseImage||!idCtx)return;
+  const img=new Image();
+  img.onload=()=>{
+    idCtx.drawImage(img,0,0);
+    idCtx.fillStyle='#000';
+    idRedactions.forEach(r=>idCtx.fillRect(r.x,r.y,r.w,r.h));
+  };
+  img.src=idBaseImage;
+}
+
+function undoIdRedaction(){
+  idRedactions.pop();
+  redrawIdCanvas();
+}
+
+function resetIdImage(){
+  idRedactions=[];
+  redrawIdCanvas();
+}
+
+function saveIdImage(){
+  if(!idCanvas)return;
+  // Schwärzungen final einbrennen
+  const img=new Image();
+  img.onload=()=>{
+    idCtx.drawImage(img,0,0);
+    idCtx.fillStyle='#000';
+    idRedactions.forEach(r=>idCtx.fillRect(r.x,r.y,r.w,r.h));
+    pendingIdImage={
+      data: idCanvas.toDataURL('image/jpeg',0.8),
+      capturedAt: new Date().toISOString(),
+      redactionCount: idRedactions.length
+    };
+    document.getElementById('id-editor').style.display='none';
+    document.getElementById('id-thumb').src=pendingIdImage.data;
+    document.getElementById('id-savedate').textContent='Erfasst: '+new Date().toLocaleString('de-DE')+' \u00B7 '+idRedactions.length+' Schw\u00E4rzung(en)';
+    document.getElementById('id-saved').style.display='block';
+    const cb=document.getElementById('ak-copy');
+    if(cb)cb.checked=true;
+    showToast('\u2713 Ausweisfoto gespeichert');
+  };
+  img.src=idBaseImage;
+}
+
+function deleteIdImage(){
+  if(!confirm('Ausweisfoto wirklich l\u00F6schen?'))return;
+  pendingIdImage=null;
+  idBaseImage=null;
+  idRedactions=[];
+  document.getElementById('id-editor').style.display='none';
+  document.getElementById('id-saved').style.display='none';
+  document.getElementById('id-thumb').src='';
+  const cb=document.getElementById('ak-copy');
+  if(cb)cb.checked=false;
+  showToast('Ausweisfoto gel\u00F6scht');
 }
 
 function toggleAktArtistField(){
@@ -1586,7 +1788,7 @@ function showRouteMap(result){
 function saveContract(){
   const mn=document.getElementById('nc-mn').value.trim();if(!mn){alert('Bitte Model-Name eintragen.');return;}
   const km=document.getElementById('nc-km').value;const sd=document.getElementById('nc-sd').value;const loc=document.getElementById('nc-loc').value;
-  const c={id:uid(),createdAt:new Date().toISOString(),modelName:mn,modelEmail:document.getElementById('nc-me').value,modelAddress:document.getElementById('nc-ma').value,muaName:document.getElementById('nc-muaname').value,muaEmail:document.getElementById('nc-muaemail').value,shootDate:sd,contractDate:document.getElementById('nc-cd').value,location:loc,distanceKm:km!==''?Number(km):null,imageCount:document.getElementById('nc-images').value||null,deliveryDays:document.getElementById('nc-delivery').value||null,contractBody:applyAktOptions(applyReleaseOptions(document.getElementById('nc-body').value)),sigP:null,sigPAt:null,sigM:null,sigMAt:null};
+  const c={id:uid(),createdAt:new Date().toISOString(),modelName:mn,modelEmail:document.getElementById('nc-me').value,modelAddress:document.getElementById('nc-ma').value,muaName:document.getElementById('nc-muaname').value,muaEmail:document.getElementById('nc-muaemail').value,shootDate:sd,contractDate:document.getElementById('nc-cd').value,location:loc,distanceKm:km!==''?Number(km):null,imageCount:document.getElementById('nc-images').value||null,idDocument:pendingIdImage||null,deliveryDays:document.getElementById('nc-delivery').value||null,contractBody:applyAktOptions(applyReleaseOptions(document.getElementById('nc-body').value)),sigP:null,sigPAt:null,sigM:null,sigMAt:null};
   DB.contracts.push(c);
   if(km!==''&&!isNaN(km))DB.stats.push({id:uid(),contractId:c.id,km:Number(km),year:new Date(sd).getFullYear(),date:sd,location:loc});
   persist();activeContractId=c.id;go('contracts');
