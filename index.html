@@ -462,6 +462,7 @@ canvas.sig-pad{display:block;width:100%;border:1px dashed var(--border);border-r
           </div>
           <div id="ak-artist-wrap" style="display:none;margin-top:10px;padding-left:24px">
             <input type="text" id="ak-artistname" placeholder="z. B. Luna Vega" style="max-width:280px">
+            <div id="ak-artist-hint" style="display:none;font-size:11px;color:var(--success);margin-top:5px">&#10003; Aus Kontakt &uuml;bernommen</div>
           </div>
         </div>
         <div class="sep" style="margin:14px 0"></div>
@@ -915,7 +916,15 @@ canvas.sig-pad{display:block;width:100%;border:1px dashed var(--border);border-r
       <div class="field"><label class="field-label">An (E-Mail)</label><input type="email" id="es-to"></div>
       <div class="field"><label class="field-label">Betreff</label><input type="text" id="es-subj"></div>
       <div class="field"><label class="field-label">Nachricht</label><textarea id="es-body" rows="10"></textarea></div>
-      <p style="font-size:12px;color:var(--muted)">💡 PDF vorher exportieren und manuell an die E-Mail anhängen.</p>
+      <div style="background:var(--warn-dim);border:1px solid rgba(212,146,74,.3);border-radius:var(--rs);padding:12px 14px;font-size:12px;color:var(--warn);line-height:1.8">
+        <strong>⚠ PDF-Anhang</strong><br>
+        <span style="color:var(--muted)">Browser können aus Sicherheitsgründen keine Dateien automatisch an E-Mails anhängen. So geht's:</span>
+        <div style="margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <button class="btn btn-sm" onclick="exportPdfForEmail()">1. 📄 PDF erzeugen</button>
+          <span style="color:var(--dim)">→</span>
+          <span style="color:var(--muted);font-size:11.5px">2. E-Mail öffnen · 3. PDF manuell anhängen</span>
+        </div>
+      </div>
     </div>
     <div class="sep"></div>
     <div class="btn-row" style="justify-content:flex-end">
@@ -1234,6 +1243,12 @@ function applyEmailTpl(){
   document.getElementById('es-subj').value=fill(tpl.subject,c);
   document.getElementById('es-body').value=fill(tpl.body,c);
 }
+function exportPdfForEmail(){
+  if(!emailCid){showToast('Kein Vertrag ausgewählt');return;}
+  exportPDF(emailCid);
+  showToast('📄 PDF wird geöffnet – als Datei speichern, dann an E-Mail anhängen', 6000);
+}
+
 function doSendEmail(){
   const to=document.getElementById('es-to').value;const subj=document.getElementById('es-subj').value;const body=document.getElementById('es-body').value;
   window.location.href=`mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(body)}`;
@@ -1314,6 +1329,8 @@ function loadTplText(){
   const isRelease = /EINWILLIGUNGSERKL|Model Release/i.test(combined) && !isAkt;
   document.getElementById('release-options').style.display = isRelease ? 'block' : 'none';
   document.getElementById('akt-options').style.display = isAkt ? 'block' : 'none';
+  // Künstlername erneut übernehmen falls Kontakt bereits gewählt
+  if(isRelease||isAkt) applyArtistNameFromContact();
 }
 
 // ── AUSWEIS-ERFASSUNG MIT SCHWÄRZUNG ─────────────────────────────────────────
@@ -1640,19 +1657,37 @@ function fillFromContact(){
   document.getElementById('nc-mn').value=c.name||'';
   document.getElementById('nc-me').value=c.email||'';
   document.getElementById('nc-ma').value=c.address||'';
-  // Künstlername ins Model-Release übernehmen falls hinterlegt
-  const artistField=document.getElementById('rl-artistname');
-  if(artistField){
-    artistField.value=c.artistName||'';
-    if(c.artistName){
-      // Automatisch auf "Künstlername" umschalten
-      const radio=document.querySelector('input[name="rl-naming"][value="artist"]');
-      if(radio){radio.checked=true;toggleArtistField();}
-      const hint=document.getElementById('artist-hint');
-      if(hint)hint.style.display='block';
-    }
+  applyArtistNameFromContact();
+}
+
+// Übernimmt den Künstlernamen des gewählten Kontakts in BEIDE Release-Formulare
+function applyArtistNameFromContact(){
+  const id=document.getElementById('nc-contact').value;
+  if(!id)return;
+  const c=DB.contacts.find(x=>x.id===id);
+  if(!c||!c.artistName)return;
+
+  // Normales Model Release
+  const rlField=document.getElementById('rl-artistname');
+  if(rlField){
+    rlField.value=c.artistName;
+    const rlRadio=document.querySelector('input[name="rl-naming"][value="artist"]');
+    if(rlRadio){rlRadio.checked=true;toggleArtistField();}
+    const hint=document.getElementById('artist-hint');
+    if(hint)hint.style.display='block';
+  }
+
+  // Akt Release
+  const akField=document.getElementById('ak-artistname');
+  if(akField){
+    akField.value=c.artistName;
+    const akRadio=document.querySelector('input[name="ak-naming"][value="artist"]');
+    if(akRadio){akRadio.checked=true;toggleAktArtistField();}
+    const akHint=document.getElementById('ak-artist-hint');
+    if(akHint)akHint.style.display='block';
   }
 }
+
 function resetKm(){
   document.getElementById('nc-km').value='';
   document.getElementById('km-msg').textContent='';
