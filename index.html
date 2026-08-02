@@ -87,6 +87,18 @@ canvas.sig-pad{display:block;width:100%;border:1px dashed var(--border);border-r
 .sig-img-preview{max-height:64px;border:1px solid var(--border);border-radius:var(--rs);background:#f8f6f1;padding:5px;display:block}
 .sig-timestamp{font-size:10.5px;color:var(--dim);margin-top:5px}
 .contract-body-pre{white-space:pre-wrap;font-family:'Jost',sans-serif;font-size:12.5px;line-height:1.9;color:var(--muted);background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);padding:14px;max-height:240px;overflow-y:auto}
+.contract-body-pre .cb-box{display:inline-block;cursor:pointer;user-select:none;color:var(--accent);font-weight:700;padding:0 2px;border-radius:3px;transition:background .12s}
+.contract-body-pre .cb-box:hover{background:var(--accent-mid)}
+.contract-body-pre .cb-checked{color:var(--success)}
+.contract-body-pre .fill-field{display:inline-block;min-width:140px;border-bottom:1px dashed var(--accent);color:var(--text);cursor:text;padding:1px 4px;background:var(--accent-dim);border-radius:2px}
+.contract-body-pre .fill-field:hover{background:var(--accent-mid)}
+.contract-body-pre .fill-field:empty::before{content:'klicken zum Ausfüllen';color:var(--dim);font-style:italic;font-size:11px}
+.contract-body-pre .fill-field:focus{outline:1px solid var(--accent);background:var(--surface)}
+.rl-check{display:flex;align-items:center;gap:9px;cursor:pointer;font-size:13px;color:var(--text);padding:3px 0;transition:color .12s}
+.rl-check:hover{color:var(--accent)}
+.rl-check input[type=checkbox],.rl-check input[type=radio]{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;flex-shrink:0;margin:0}
+.rl-check span{line-height:1.4}
+.interactive-hint{font-size:11px;color:var(--accent);background:var(--accent-dim);border:1px solid rgba(200,169,110,.25);border-radius:var(--rs);padding:6px 12px;margin-bottom:8px;display:flex;align-items:center;gap:6px}
 .contacts-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
 .contact-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;cursor:pointer;transition:all .15s;position:relative}
 .contact-card:hover{border-color:var(--accent);transform:translateY(-1px)}
@@ -339,6 +351,57 @@ canvas.sig-pad{display:block;width:100%;border:1px dashed var(--border);border-r
         <div class="route-summary" id="route-summary"></div>
         <div id="route-map"></div>
       </div>
+      <!-- MODEL RELEASE OPTIONEN -->
+      <div id="release-options" style="display:none;background:var(--surface);border:1px solid var(--accent);border-radius:var(--r);padding:18px 20px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px">
+          <span style="font-size:16px">📋</span>
+          <div>
+            <div style="font-weight:600;font-size:14px;color:var(--accent)">Model-Release Optionen</div>
+            <div style="font-size:11.5px;color:var(--muted)">Diese Angaben werden automatisch in den Vertragstext übernommen</div>
+          </div>
+        </div>
+
+        <!-- Verwendungszwecke -->
+        <div style="margin-bottom:18px">
+          <div class="field-label" style="margin-bottom:8px">§ 3 – Zulässige Verwendungszwecke</div>
+          <div style="display:grid;gap:7px">
+            <label class="rl-check"><input type="checkbox" id="rl-portfolio" checked><span>Eigenwerbung und Portfolio (Website, Print)</span></label>
+            <label class="rl-check"><input type="checkbox" id="rl-social" checked><span>Social-Media-Kanäle des Fotografen</span></label>
+            <label class="rl-check"><input type="checkbox" id="rl-expo"><span>Ausstellungen, Wettbewerbe, Fotobücher</span></label>
+            <label class="rl-check"><input type="checkbox" id="rl-edit"><span>Redaktionelle Veröffentlichungen (Magazine, Blogs)</span></label>
+            <label class="rl-check"><input type="checkbox" id="rl-comm"><span>Kommerzielle Werbung (Anzeigen, Kampagnen Dritter)</span></label>
+            <label class="rl-check"><input type="checkbox" id="rl-stock"><span>Bildagenturen / Stockfotografie</span></label>
+          </div>
+        </div>
+
+        <div class="sep" style="margin:14px 0"></div>
+
+        <!-- Namensnennung -->
+        <div style="margin-bottom:18px">
+          <div class="field-label" style="margin-bottom:8px">§ 8 – Namensnennung</div>
+          <div style="display:grid;gap:7px">
+            <label class="rl-check"><input type="radio" name="rl-naming" value="full" checked onchange="toggleArtistField()"><span>Namensnennung erwünscht</span></label>
+            <label class="rl-check"><input type="radio" name="rl-naming" value="none" onchange="toggleArtistField()"><span>Keine Namensnennung (anonym)</span></label>
+            <label class="rl-check"><input type="radio" name="rl-naming" value="artist" onchange="toggleArtistField()"><span>Nur Künstlername verwenden</span></label>
+          </div>
+          <div id="artist-name-wrap" style="display:none;margin-top:10px;padding-left:24px">
+            <input type="text" id="rl-artistname" placeholder="z. B. Luna Vega" style="max-width:280px">
+            <div id="artist-hint" style="display:none;font-size:11px;color:var(--success);margin-top:5px">✓ Aus Kontakt übernommen</div>
+          </div>
+        </div>
+
+        <div class="sep" style="margin:14px 0"></div>
+
+        <!-- Personendaten -->
+        <div>
+          <div class="field-label" style="margin-bottom:8px">§ 6 – Volljährigkeit & Identität</div>
+          <div class="form-row">
+            <div class="field"><label class="field-label" style="font-size:10px">Geburtsdatum des Models</label><input type="date" id="rl-birthdate"></div>
+            <div class="field"><label class="field-label" style="font-size:10px">Ausweis geprüft am</label><input type="date" id="rl-idcheck"></div>
+          </div>
+        </div>
+      </div>
+
       <div class="field"><label class="field-label">Vertragstext</label><textarea id="nc-body" rows="10"></textarea></div>
     </div>
     <div class="sep"></div>
@@ -590,8 +653,8 @@ canvas.sig-pad{display:block;width:100%;border:1px dashed var(--border);border-r
     <div class="btn-row" style="justify-content:space-between">
       <button class="btn btn-danger btn-sm" id="sm-delete-btn" onclick="deleteShooting()" style="display:none">Löschen</button>
       <div class="btn-row" style="margin-left:auto">
-        <button class="btn btn-ghost btn-sm" id="sm-ical-btn" onclick="exportIcal()" style="display:none" title="Als .ics Datei – für Apple Kalender, Outlook">📅 Kalender (.ics)</button>
-        <button class="btn btn-ghost btn-sm" id="sm-gcal-btn" onclick="exportGoogleCal()" style="display:none" title="Direkt in Google Kalender eintragen">🗓️ Google</button>
+        <button class="btn btn-outline btn-sm" id="sm-gcal-btn" onclick="exportGoogleCal()" style="display:none" title="Öffnet Google Kalender mit vorausgefülltem Termin – funktioniert auf allen Geräten">🗓️ In Kalender eintragen</button>
+        <button class="btn btn-ghost btn-sm" id="sm-ical-btn" onclick="exportIcal()" style="display:none" title=".ics Datei für Apple Kalender / Outlook">📅 .ics</button>
         <button class="btn btn-ghost" onclick="closeOv('ov-shooting')">Abbrechen</button>
         <button class="btn btn-primary" onclick="saveShooting()">Speichern</button>
       </div>
@@ -631,7 +694,10 @@ canvas.sig-pad{display:block;width:100%;border:1px dashed var(--border);border-r
   <div class="modal">
     <div class="modal-hdr"><span class="modal-title" id="cm-title">Neuer Kontakt</span><button class="modal-close" onclick="closeOv('ov-contact')">×</button></div>
     <div class="form-grid">
-      <div class="field"><label class="field-label">Name *</label><input type="text" id="cm-name"></div>
+      <div class="form-row">
+        <div class="field"><label class="field-label">Name *</label><input type="text" id="cm-name"></div>
+        <div class="field"><label class="field-label">Künstlername (optional)</label><input type="text" id="cm-artist" placeholder="z. B. Luna Vega"></div>
+      </div>
       <div class="form-row">
         <div class="field"><label class="field-label">Rolle</label><select id="cm-role"><option>Model</option><option>Make-up-Artist</option><option>Stylist</option><option>Assistent</option><option>Sonstiges</option></select></div>
         <div class="field"><label class="field-label">Telefon</label><input type="text" id="cm-phone"></div>
@@ -752,17 +818,18 @@ const TPL2=`ERWEITERTER TFP-VERTRAG MIT MAKE-UP-ARTIST\n\nFotograf/in:    {{phot
 
 const TPL3=`TFP-VERTRAG MIT KOMMERZIELLER NUTZUNG – ONLYFANS\n\nZwischen:\nFotograf/in: {{photographer_name}}\nAdresse:     {{photographer_address}}\nE-Mail:      {{photographer_email}}\n\nund\n\nModel:       {{model_name}}\nAdresse:     {{model_address}}\nE-Mail:      {{model_email}}\n\nShooting-Datum: {{shoot_date}}\nLocation:       {{location}}\nEntfernung (Fotograf → Location): {{distance_km}} km\n\nPRÄAMBEL\nDie Vertragsparteien vereinbaren ein Shooting auf TfP-Basis (Time for Pictures) mit dem ausdrücklichen Zweck der kommerziellen Verwertung der entstandenen Bildmaterialien auf der Plattform OnlyFans. Beide Parteien sind gleichberechtigte Partner und profitieren gemeinsam von den Einnahmen.\n\n§ 1 – Gegenstand des Vertrages\nDer Fotograf erstellt am {{shoot_date}} an der Location {{location}} professionelle Bildmaterialien (Fotos) gemeinsam mit dem Model. Die Materialien sind ausdrücklich für die Veröffentlichung auf OnlyFans (onlyfans.com) bestimmt.\n\n§ 2 – Leistungen des Fotografen\n- Professionelle Fotografie und Bildbearbeitung\n- Bereitstellung aller bearbeiteten Bilder in druckfähiger Auflösung\n- Keine gesonderte Vergütung für die fotografische Leistung\n\n§ 3 – Leistungen des Models\n- Mitwirkung am Shooting gemäß gemeinsamer Absprache\n- Eigenverantwortliche Verwaltung und Veröffentlichung auf dem eigenen OnlyFans-Kanal\n- Keine gesonderte Vergütung für die Model-Leistung\n\n§ 4 – Nutzungsrechte\nBeide Parteien erhalten ein einfaches, nicht exklusives Nutzungsrecht an den entstandenen Bildern für folgende Zwecke:\n- Veröffentlichung auf OnlyFans (kostenpflichtig oder kostenlos)\n- Bewerbung der eigenen OnlyFans-Präsenz auf anderen Social-Media-Plattformen\n- Portfolio- und Eigenwerbungszwecke\n\nEine Weiterlizenzierung der Bilder an Dritte bedarf der ausdrücklichen schriftlichen Zustimmung beider Parteien.\n\n§ 5 – Einnahmenteilung OnlyFans\nDie durch die veröffentlichten Inhalte auf OnlyFans erzielten Einnahmen werden wie folgt aufgeteilt:\n- Model: 70 % der Netto-Einnahmen aus dem eigenen Kanal\n- Fotograf: 30 % der Netto-Einnahmen, zahlbar monatlich bis zum 10. des Folgemonats\n\nAls Nachweis legt das Model dem Fotografen auf Verlangen monatliche Abrechnungen der OnlyFans-Plattform vor. Beide Parteien verpflichten sich zu einer transparenten und ehrlichen Abrechnung.\n\n§ 6 – Namensnennung und Verlinkung\nBei Veröffentlichungen wird der Fotograf nach Möglichkeit namentlich genannt oder verlinkt. Das Model kann auf die Namensnennung des Fotografen verzichten, sofern dies ausdrücklich vereinbart wurde.\n\n§ 7 – Content-Richtlinien und Verantwortung\nDas Model trägt die alleinige Verantwortung für die Einhaltung der Nutzungsbedingungen von OnlyFans sowie aller geltenden gesetzlichen Vorschriften bei der Veröffentlichung der Inhalte. Der Fotograf haftet nicht für Verstöße gegen Plattformrichtlinien durch das Model.\n\n§ 8 – Altersprüfung\nDas Model versichert hiermit ausdrücklich, zum Zeitpunkt des Shootings das 18. Lebensjahr vollendet zu haben und legt auf Verlangen einen gültigen Lichtbildausweis vor.\n\n§ 9 – Vertragsdauer und Kündigung\nDieser Vertrag gilt unbefristet für die im Rahmen dieses Shootings entstandenen Materialien. Eine Kündigung der Nutzungsrechte ist mit einer Frist von 30 Tagen schriftlich möglich. Bereits veröffentlichte Inhalte können hiervon ausgenommen sein.\n\n§ 10 – Fahrtkostenregelung\nFahrtkosten trägt jede Partei selbst.\n\n§ 11 – Wasserzeichen\nDas Model ist nicht berechtigt, eigene Wasserzeichen, Logos, Social-Media-Handles oder sonstige Kennzeichnungen auf den gelieferten Bildern anzubringen. Die Bilder dürfen ausschließlich in der vom Fotografen gelieferten Form verwendet werden. Ausnahmen bedürfen der ausdrücklichen schriftlichen Zustimmung des Fotografen.\n\n§ 12 – Bildbearbeitung\nJegliche nachträgliche Bearbeitung, Veränderung oder Verfremdung der gelieferten Bilder durch das Model ist ausdrücklich untersagt. Dies umfasst insbesondere das Hinzufügen von Filtern, das Zuschneiden in einer den Bildinhalt verfälschenden Weise, das Überlagern mit Texten oder Grafiken sowie die Nutzung von KI-basierten Bildbearbeitungstools. Ausgenommen sind plattformübliche, nicht-destruktive Anpassungen (z. B. Helligkeit/Kontrast), sofern der Gesamteindruck des Bildes erhalten bleibt.\n\n§ 14 – Salvatorische Klausel\nSollten einzelne Bestimmungen dieses Vertrages unwirksam sein, bleibt die Wirksamkeit der übrigen Bestimmungen unberührt.\n\nOrt, Datum: {{location}}, {{contract_date}}`;
 
-const TPL4=`TFP-VERTRAG MIT KOMMERZIELLER NUTZUNG – PATREON\n\nZwischen:\nFotograf/in: {{photographer_name}}\nAdresse:     {{photographer_address}}\nE-Mail:      {{photographer_email}}\n\nund\n\nModel:       {{model_name}}\nAdresse:     {{model_address}}\nE-Mail:      {{model_email}}\n\nShooting-Datum: {{shoot_date}}\nLocation:       {{location}}\nEntfernung (Fotograf → Location): {{distance_km}} km\n\nPRÄAMBEL\nDie Vertragsparteien vereinbaren ein Shooting auf TfP-Basis (Time for Pictures) mit dem ausdrücklichen Zweck der kommerziellen Verwertung der entstandenen Bildmaterialien auf der Plattform Patreon. Beide Parteien profitieren gleichberechtigt von den erzielten Einnahmen.\n\n§ 1 – Gegenstand des Vertrages\nDer Fotograf erstellt am {{shoot_date}} an der Location {{location}} professionelle Bildmaterialien gemeinsam mit dem Model. Die Materialien sind zur Veröffentlichung auf Patreon (patreon.com) als exklusiver Creator-Content bestimmt.\n\n§ 2 – Leistungen des Fotografen\n- Professionelle Fotografie, Bildbearbeitung und Bereitstellung aller Bilder\n- Ggf. Unterstützung bei der inhaltlichen Konzeption der Patreon-Posts\n- Keine gesonderte Vergütung für die fotografische Leistung\n\n§ 3 – Leistungen des Models\n- Mitwirkung am Shooting gemäß gemeinsamer Absprache\n- Eigenverantwortliche Verwaltung und Pflege des Patreon-Kanals\n- Regelmäßige Veröffentlichung der Inhalte für Abonnenten\n- Keine gesonderte Vergütung für die Model-Leistung\n\n§ 4 – Nutzungsrechte\nBeide Parteien erhalten ein einfaches, nicht exklusives Nutzungsrecht an den entstandenen Bildern für folgende Zwecke:\n- Veröffentlichung auf Patreon als Abonnenten-exklusiver Inhalt (Tier-Inhalte)\n- Bewerbung des Patreon-Kanals auf anderen Social-Media-Plattformen\n- Portfolio- und Eigenwerbungszwecke\n\nEine Weiterlizenzierung an Dritte bedarf der schriftlichen Zustimmung beider Parteien.\n\n§ 5 – Einnahmenteilung Patreon\nDie durch Patreon-Abonnements erzielten Einnahmen, die auf die im Rahmen dieses Vertrages entstandenen Inhalte entfallen, werden wie folgt aufgeteilt:\n- Model: 65 % der auf diese Inhalte entfallenden Netto-Einnahmen\n- Fotograf: 35 % der auf diese Inhalte entfallenden Netto-Einnahmen\n\nDie Abrechnung erfolgt monatlich. Das Model legt dem Fotografen auf Verlangen entsprechende Patreon-Auswertungen vor. Beide Parteien verpflichten sich zur transparenten Abrechnung.\n\n§ 6 – Exklusivität\nDie im Rahmen dieses Vertrages erstellten Inhalte dürfen zunächst 30 Tage exklusiv auf Patreon veröffentlicht werden, bevor eine anderweitige Nutzung erfolgt, sofern nicht schriftlich anders vereinbart.\n\n§ 7 – Namensnennung und Creator-Profil\nDer Fotograf wird in den jeweiligen Patreon-Posts als Fotograf genannt. Eine Verlinkung auf das Portfolio oder Social-Media-Profil des Fotografen ist erwünscht und wird nach Möglichkeit umgesetzt.\n\n§ 8 – Verantwortung und Plattformrichtlinien\nDas Model trägt die alleinige Verantwortung für die Einhaltung der Patreon-Nutzungsbedingungen sowie aller gesetzlichen Vorschriften. Der Fotograf haftet nicht für Richtlinienverstöße durch das Model.\n\n§ 9 – Altersprüfung\nDas Model versichert ausdrücklich, zum Zeitpunkt des Shootings das 18. Lebensjahr vollendet zu haben und legt auf Verlangen einen gültigen Lichtbildausweis vor.\n\n§ 10 – Vertragsdauer und Kündigung\nDieser Vertrag gilt unbefristet für die im Rahmen dieses Shootings entstandenen Materialien. Eine Kündigung der Nutzungsrechte ist mit 30 Tagen Frist schriftlich möglich.\n\n§ 11 – Wasserzeichen\nDas Model ist nicht berechtigt, eigene Wasserzeichen, Logos, Social-Media-Handles oder sonstige Kennzeichnungen auf den gelieferten Bildern anzubringen. Die Bilder dürfen ausschließlich in der vom Fotografen gelieferten Form verwendet werden. Ausnahmen bedürfen der ausdrücklichen schriftlichen Zustimmung des Fotografen.\n\n§ 12 – Fahrtkostenregelung\nFahrtkosten trägt jede Partei selbst.\n\n§ 14 – Salvatorische Klausel\nSollten einzelne Bestimmungen dieses Vertrages unwirksam sein, bleibt die Wirksamkeit der übrigen Bestimmungen unberührt.\n\nOrt, Datum: {{location}}, {{contract_date}}`;
+const TPL4=`TFP-VERTRAG MIT KOMMERZIELLER NUTZUNG – PATREON\n\nZwischen:\nFotograf/in: {{photographer_name}}\nAdresse:     {{photographer_address}}\nE-Mail:      {{photographer_email}}\n\nund\n\nModel:       {{model_name}}\nAdresse:     {{model_address}}\nE-Mail:      {{model_email}}\n\nShooting-Datum: {{shoot_date}}\nLocation:       {{location}}\nEntfernung (Fotograf → Location): {{distance_km}} km\n\nPRÄAMBEL\nDie Vertragsparteien vereinbaren ein Shooting auf TfP-Basis (Time for Pictures) mit dem ausdrücklichen Zweck der kommerziellen Verwertung der entstandenen Bildmaterialien auf der Plattform Patreon. Beide Parteien profitieren gleichberechtigt von den erzielten Einnahmen.\n\n§ 1 – Gegenstand des Vertrages\nDer Fotograf erstellt am {{shoot_date}} an der Location {{location}} professionelle Bildmaterialien gemeinsam mit dem Model. Die Materialien sind zur Veröffentlichung auf Patreon (patreon.com) als exklusiver Creator-Content bestimmt.\n\n§ 2 – Leistungen des Fotografen\n- Professionelle Fotografie, Bildbearbeitung und Bereitstellung aller Bilder\n- Ggf. Unterstützung bei der inhaltlichen Konzeption der Patreon-Posts\n- Keine gesonderte Vergütung für die fotografische Leistung\n\n§ 3 – Leistungen des Models\n- Mitwirkung am Shooting gemäß gemeinsamer Absprache\n- Eigenverantwortliche Verwaltung und Pflege des Patreon-Kanals\n- Regelmäßige Veröffentlichung der Inhalte für Abonnenten\n- Keine gesonderte Vergütung für die Model-Leistung\n\n§ 4 – Nutzungsrechte\nBeide Parteien erhalten ein einfaches, nicht exklusives Nutzungsrecht an den entstandenen Bildern für folgende Zwecke:\n- Veröffentlichung auf Patreon als Abonnenten-exklusiver Inhalt (Tier-Inhalte)\n- Bewerbung des Patreon-Kanals auf anderen Social-Media-Plattformen\n- Portfolio- und Eigenwerbungszwecke\n\nEine Weiterlizenzierung an Dritte bedarf der schriftlichen Zustimmung beider Parteien.\n\n§ 5 – Einnahmenteilung Patreon\nDie durch Patreon-Abonnements erzielten Einnahmen, die auf die im Rahmen dieses Vertrages entstandenen Inhalte entfallen, werden wie folgt aufgeteilt:\n- Model: 65 % der auf diese Inhalte entfallenden Netto-Einnahmen\n- Fotograf: 35 % der auf diese Inhalte entfallenden Netto-Einnahmen\n\nDie Abrechnung erfolgt monatlich. Das Model legt dem Fotografen auf Verlangen entsprechende Patreon-Auswertungen vor. Beide Parteien verpflichten sich zur transparenten Abrechnung.\n\n§ 6 – Exklusivität\nDie im Rahmen dieses Vertrages erstellten Inhalte dürfen zunächst 30 Tage exklusiv auf Patreon veröffentlicht werden, bevor eine anderweitige Nutzung erfolgt, sofern nicht schriftlich anders vereinbart.\n\n§ 7 – Namensnennung und Creator-Profil\nDer Fotograf wird in den jeweiligen Patreon-Posts als Fotograf genannt. Eine Verlinkung auf das Portfolio oder Social-Media-Profil des Fotografen ist erwünscht und wird nach Möglichkeit umgesetzt.\n\n§ 8 – Verantwortung und Plattformrichtlinien\nDas Model trägt die alleinige Verantwortung für die Einhaltung der Patreon-Nutzungsbedingungen sowie aller gesetzlichen Vorschriften. Der Fotograf haftet nicht für Richtlinienverstöße durch das Model.\n\n§ 9 – Altersprüfung\nDas Model versichert ausdrücklich, zum Zeitpunkt des Shootings das 18. Lebensjahr vollendet zu haben und legt auf Verlangen einen gültigen Lichtbildausweis vor.\n\n§ 10 – Vertragsdauer und Kündigung\nDieser Vertrag gilt unbefristet für die im Rahmen dieses Shootings entstandenen Materialien. Eine Kündigung der Nutzungsrechte ist mit 30 Tagen Frist schriftlich möglich.\n\n§ 11 – Wasserzeichen\nDas Model ist nicht berechtigt, eigene Wasserzeichen, Logos, Social-Media-Handles oder sonstige Kennzeichnungen auf den gelieferten Bildern anzubringen. Die Bilder dürfen ausschließlich in der vom Fotografen gelieferten Form verwendet werden. Ausnahmen bedürfen der ausdrücklichen schriftlichen Zustimmung des Fotografen.\n\n§ 12 – Fahrtkostenregelung\nFahrtkosten trägt jede Partei selbst.\n\n§ 13 – Salvatorische Klausel\nSollten einzelne Bestimmungen dieses Vertrages unwirksam sein, bleibt die Wirksamkeit der übrigen Bestimmungen unberührt.\n\nOrt, Datum: {{location}}, {{contract_date}}`;
+const TPL5=`EINWILLIGUNGSERKLÄRUNG ZUR VERÖFFENTLICHUNG VON BILDNISSEN\n(Model Release gemäß § 22 KunstUrhG und Art. 6 Abs. 1 lit. a DSGVO)\n\nZwischen\n\nFotograf/in (Rechteinhaber):\nName:    {{photographer_name}}\nAdresse: {{photographer_address}}\nE-Mail:  {{photographer_email}}\n\nund\n\nAbgebildete Person (Model):\nName:         {{model_name}}\nAdresse:      {{model_address}}\nE-Mail:       {{model_email}}\nGeburtsdatum: ________________________\n\nAufnahmedatum: {{shoot_date}}\nAufnahmeort:   {{location}}\n\n\n§ 1 – Gegenstand der Einwilligung\nDas Model erklärt sich damit einverstanden, dass die im Rahmen des oben genannten Foto-Shootings entstandenen Aufnahmen (Fotografien, Videoaufnahmen sowie daraus abgeleitete Bearbeitungen) durch den Fotografen im nachfolgend beschriebenen Umfang genutzt und veröffentlicht werden dürfen.\n\n§ 2 – Umfang der Nutzungsrechte\nDas Model räumt dem Fotografen folgende Rechte ein:\n\n(1) Räumlich unbeschränktes Nutzungsrecht (weltweit)\n(2) Zeitlich unbeschränktes Nutzungsrecht\n(3) Inhaltlich unbeschränktes Nutzungsrecht im Rahmen der in § 3 genannten Verwendungszwecke\n(4) Das Recht zur Bearbeitung, Retusche, Beschnitt und farblichen Anpassung der Aufnahmen\n(5) Das Recht zur Weitergabe an Dritte ausschließlich zu den in § 3 genannten Zwecken\n\n§ 3 – Zulässige Verwendungszwecke\nDie Aufnahmen dürfen verwendet werden für:\n\n[ ] Eigenwerbung und Portfolio des Fotografen (Website, Print-Portfolio)\n[ ] Social-Media-Kanäle des Fotografen (Instagram, Facebook, Pinterest u.a.)\n[ ] Ausstellungen, Wettbewerbe und Fotobücher\n[ ] Redaktionelle Veröffentlichungen (Magazine, Blogs)\n[ ] Kommerzielle Werbung (Anzeigen, Werbekampagnen Dritter)\n[ ] Bildagenturen / Stockfotografie\n\nNicht angekreuzte Verwendungszwecke sind ausdrücklich nicht gestattet.\n\n§ 4 – Nicht gestattete Verwendung\nDie Aufnahmen dürfen ausdrücklich NICHT verwendet werden für:\n- Verwendungen in ehrverletzendem, diffamierendem oder herabwürdigendem Kontext\n- Politische oder religiöse Werbung ohne gesonderte schriftliche Zustimmung\n- Darstellungen im Zusammenhang mit Straftaten, Krankheiten oder Suchtmitteln\n- Weitergabe an Dritte zur eigenständigen kommerziellen Verwertung ohne gesonderte Vereinbarung\n\n§ 5 – Vergütung\nDie Einwilligung erfolgt im Rahmen einer TfP-Vereinbarung (Time for Pictures). Eine finanzielle Vergütung wird nicht geschuldet. Als Gegenleistung erhält das Model bearbeitete Aufnahmen zur eigenen nicht-kommerziellen Nutzung gemäß gesondertem TfP-Vertrag.\n\n§ 6 – Bestätigung der Volljährigkeit\nDas Model versichert ausdrücklich, zum Zeitpunkt der Aufnahme das 18. Lebensjahr vollendet zu haben. Auf Verlangen des Fotografen wird ein gültiges amtliches Lichtbilddokument zur Einsichtnahme vorgelegt.\n\nAusweisdokument geprüft am: ________________________\n\nBei Minderjährigen ist zusätzlich die schriftliche Einwilligung aller Erziehungsberechtigten erforderlich (siehe Anlage).\n\n§ 7 – Widerruf der Einwilligung\nDie Einwilligung kann vom Model jederzeit mit Wirkung für die Zukunft schriftlich widerrufen werden. Ein Widerruf lässt die Rechtmäßigkeit der bis zum Widerruf erfolgten Nutzung unberührt.\n\nBereits erfolgte Veröffentlichungen in gedruckter Form sowie bereits ausgelieferte oder lizenzierte Aufnahmen sind vom Widerruf ausgenommen, soweit deren Rückruf wirtschaftlich unzumutbar ist. Der Fotograf wird eine Entfernung digitaler Veröffentlichungen in seinem Einflussbereich innerhalb von 30 Tagen nach Zugang des Widerrufs vornehmen.\n\n§ 8 – Namensnennung\n[ ] Das Model wünscht eine Namensnennung bei Veröffentlichungen\n[ ] Das Model wünscht KEINE Namensnennung (anonyme Veröffentlichung)\n[ ] Nennung nur des Künstlernamens: ________________________\n\n§ 9 – Datenschutz\nDie personenbezogenen Daten des Models werden ausschließlich zum Zweck der Vertragsabwicklung und Rechtedokumentation verarbeitet und gespeichert. Rechtsgrundlage ist Art. 6 Abs. 1 lit. a und b DSGVO.\n\nDem Model stehen die Rechte auf Auskunft (Art. 15 DSGVO), Berichtigung (Art. 16 DSGVO), Löschung (Art. 17 DSGVO), Einschränkung der Verarbeitung (Art. 18 DSGVO) sowie Datenübertragbarkeit (Art. 20 DSGVO) zu.\n\nEs besteht ein Beschwerderecht bei der zuständigen Datenschutzaufsichtsbehörde.\n\n§ 10 – Aufbewahrung\nDiese Einwilligungserklärung wird zu Dokumentationszwecken für die Dauer der Nutzung der Aufnahmen sowie darüber hinaus für die Dauer der gesetzlichen Verjährungsfristen aufbewahrt.\n\n§ 11 – Salvatorische Klausel\nSollten einzelne Bestimmungen dieser Vereinbarung unwirksam oder undurchführbar sein, bleibt die Wirksamkeit der übrigen Bestimmungen hiervon unberührt.\n\n§ 12 – Bestätigung\nDas Model bestätigt mit seiner Unterschrift:\n- die vorstehende Erklärung vollständig gelesen und verstanden zu haben\n- die Einwilligung freiwillig und ohne Zwang zu erteilen\n- über das Widerrufsrecht gemäß § 7 informiert worden zu sein\n- eine Kopie dieser Erklärung erhalten zu haben\n\n\nOrt, Datum: {{location}}, {{contract_date}}`;
 
 const PLACEHOLDERS=['{{photographer_name}}','{{photographer_email}}','{{photographer_address}}','{{model_name}}','{{model_email}}','{{model_address}}','{{mua_name}}','{{mua_email}}','{{shoot_date}}','{{contract_date}}','{{location}}','{{distance_km}}'];
 
-function defaultDB(){return{photographer:{name:'',address:'',email:'',homeCity:''},contacts:[],contracts:[],shootings:[],templates:[{id:'t1',name:'Standard TfP-Vertrag',body:TPL1},{id:'t2',name:'Erweiterter TfP-Vertrag (inkl. MUA)',body:TPL2},{id:'t3',name:'TfP kommerziell – OnlyFans',body:TPL3},{id:'t4',name:'TfP kommerziell – Patreon',body:TPL4}],emailTemplates:[{id:'e1',name:'Versand mit Vertrag',subject:'TfP-Vertrag für unser Shooting am {{shoot_date}}',body:'Hallo {{model_name}},\n\nvielen Dank für dein Interesse an unserem gemeinsamen Shooting!\n\nAnbei der TfP-Vertrag für das Shooting am {{shoot_date}} an der Location: {{location}}.\n\nBitte unterschreibe ihn digital und sende ihn zurück.\n\nHerzliche Grüße,\n{{photographer_name}}\n{{photographer_email}}'},{id:'e2',name:'Erinnerung / Follow-Up',subject:'Erinnerung: TfP-Vertrag noch ausstehend',body:'Hallo {{model_name}},\n\nkurze Erinnerung: Der TfP-Vertrag für das Shooting am {{shoot_date}} ist noch nicht vollständig unterzeichnet.\n\nBitte bis 48h vorher zurücksenden.\n\nHerzliche Grüße,\n{{photographer_name}}'}],stats:[]}}
+function defaultDB(){return{photographer:{name:'',address:'',email:'',homeCity:''},contacts:[],contracts:[],shootings:[],templates:[{id:'t1',name:'Standard TfP-Vertrag',body:TPL1},{id:'t2',name:'Erweiterter TfP-Vertrag (inkl. MUA)',body:TPL2},{id:'t3',name:'TfP kommerziell – OnlyFans',body:TPL3},{id:'t4',name:'TfP kommerziell – Patreon',body:TPL4},{id:'t5',name:'Model Release / Einwilligungserklärung',body:TPL5}],emailTemplates:[{id:'e1',name:'Versand mit Vertrag',subject:'TfP-Vertrag für unser Shooting am {{shoot_date}}',body:'Hallo {{model_name}},\n\nvielen Dank für dein Interesse an unserem gemeinsamen Shooting!\n\nAnbei der TfP-Vertrag für das Shooting am {{shoot_date}} an der Location: {{location}}.\n\nBitte unterschreibe ihn digital und sende ihn zurück.\n\nHerzliche Grüße,\n{{photographer_name}}\n{{photographer_email}}'},{id:'e2',name:'Erinnerung / Follow-Up',subject:'Erinnerung: TfP-Vertrag noch ausstehend',body:'Hallo {{model_name}},\n\nkurze Erinnerung: Der TfP-Vertrag für das Shooting am {{shoot_date}} ist noch nicht vollständig unterzeichnet.\n\nBitte bis 48h vorher zurücksenden.\n\nHerzliche Grüße,\n{{photographer_name}}'}],stats:[]}}
 
 let DB;
 try{const r=localStorage.getItem('tfp_v3');DB=r?JSON.parse(r):defaultDB();if(!DB.templates||!DB.templates.length)DB.templates=defaultDB().templates;if(!DB.emailTemplates||!DB.emailTemplates.length)DB.emailTemplates=defaultDB().emailTemplates;if(!DB.shootings)DB.shootings=[];
 // Neue Standard-Vorlagen nachträglich hinzufügen falls noch nicht vorhanden
 // Vorhandene Default-Vorlagen immer mit aktuellem Inhalt überschreiben
-[{id:'t1',name:'Standard TfP-Vertrag',body:TPL1},{id:'t2',name:'Erweiterter TfP-Vertrag (inkl. MUA)',body:TPL2},{id:'t3',name:'TfP kommerziell – OnlyFans',body:TPL3},{id:'t4',name:'TfP kommerziell – Patreon',body:TPL4}].forEach(t=>{
+[{id:'t1',name:'Standard TfP-Vertrag',body:TPL1},{id:'t2',name:'Erweiterter TfP-Vertrag (inkl. MUA)',body:TPL2},{id:'t3',name:'TfP kommerziell – OnlyFans',body:TPL3},{id:'t4',name:'TfP kommerziell – Patreon',body:TPL4},{id:'t5',name:'Model Release / Einwilligungserklärung',body:TPL5}].forEach(t=>{
   const idx=DB.templates.findIndex(x=>x.id===t.id);
   if(idx===-1)DB.templates.push(t);else DB.templates[idx].body=t.body;
 });
@@ -865,6 +932,78 @@ function selectC(id,el){
   if(el)el.classList.add('active');
   const c=DB.contracts.find(x=>x.id===id);if(c)renderCDetail(c);
 }
+// ── INTERAKTIVE VERTRAGSFELDER ───────────────────────────────────────────────
+// Prüft ob der Vertrag Checkboxen oder Ausfüllfelder enthält
+function hasInteractive(body){
+  if(!body)return false;
+  return /\[[ xX]\]/.test(body) || /_{5,}/.test(body);
+}
+
+// HTML-Escape für sichere Ausgabe
+function esc(t){
+  return String(t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// Rendert den Vertragstext mit anklickbaren Checkboxen und Ausfüllfeldern
+function renderInteractiveBody(c,p){
+  const raw = fillMasked(c.contractBody,c,p);
+  let html = esc(raw);
+  let cbIndex = 0;
+  let fieldIndex = 0;
+
+  // Checkboxen: [ ] oder [x] → klickbar
+  html = html.replace(/\[([ xX])\]/g, (m, state) => {
+    const checked = state.toLowerCase() === 'x';
+    const idx = cbIndex++;
+    return '<span class="cb-box'+(checked?' cb-checked':'')+'" onclick="toggleCheckbox(\''+c.id+'\','+idx+')" title="Klicken zum Umschalten">['+(checked?'\u2713':'\u00A0')+']</span>';
+  });
+
+  // Ausfüllfelder: _____ → editierbar
+  html = html.replace(/_{5,}/g, () => {
+    const idx = fieldIndex++;
+    const val = (c.fillFields && c.fillFields[idx]) ? esc(c.fillFields[idx]) : '';
+    return '<span class="fill-field" contenteditable="true" data-idx="'+idx+'" '
+      +'onblur="saveFillField(\''+c.id+'\','+idx+',this.innerText)" '
+      +'onkeydown="if(event.key===\'Enter\'){event.preventDefault();this.blur();}">'+val+'</span>';
+  });
+
+  return html;
+}
+
+// Schaltet eine Checkbox im gespeicherten Vertragstext um
+function toggleCheckbox(contractId, cbIndex){
+  const c = DB.contracts.find(x=>x.id===contractId);
+  if(!c) return;
+  let count = 0;
+  c.contractBody = c.contractBody.replace(/\[([ xX])\]/g, (m, state) => {
+    if(count++ === cbIndex){
+      return state.toLowerCase()==='x' ? '[ ]' : '[x]';
+    }
+    return m;
+  });
+  persist();
+  renderCDetail(c);
+}
+
+// Speichert den Inhalt eines Ausfüllfeldes
+function saveFillField(contractId, idx, value){
+  const c = DB.contracts.find(x=>x.id===contractId);
+  if(!c) return;
+  if(!c.fillFields) c.fillFields = {};
+  c.fillFields[idx] = String(value||'').trim();
+  persist();
+}
+
+// Setzt die Ausfüllfelder in den Text ein (für PDF-Export)
+function applyFillFields(text, c){
+  if(!c.fillFields) return text;
+  let idx = 0;
+  return text.replace(/_{5,}/g, (m) => {
+    const val = c.fillFields[idx++];
+    return val ? val : m;
+  });
+}
+
 function renderCDetail(c){
   const p=DB.photographer;const done=c.sigP&&c.sigM;
   const sigH=(who,sig,name,at)=>{
@@ -888,7 +1027,8 @@ function renderCDetail(c){
         <div><span style="color:var(--muted)">Location:</span> ${pTag(maskAddr(c.location||'–'))}</div>
         <div><span style="color:var(--muted)">Distanz:</span> ${c.distanceKm!=null?c.distanceKm+' km':'–'}</div>
       </div>
-      <pre class="contract-body-pre">${fillMasked(c.contractBody,c,p)}</pre>
+      ${hasInteractive(c.contractBody)?'<div class="interactive-hint">\u270F\uFE0F Checkboxen anklickbar \u00B7 Gestrichelte Felder zum Ausf\u00FCllen anklicken</div>':''}
+      <pre class="contract-body-pre" id="cbody-${c.id}">${renderInteractiveBody(c,p)}</pre>
     </div>
     <div class="card">
       <div class="card-title">Unterschriften</div>
@@ -902,7 +1042,7 @@ function renderCDetail(c){
 function deleteC(id){if(!confirm('Vertrag wirklich löschen?'))return;DB.contracts=DB.contracts.filter(c=>c.id!==id);DB.stats=DB.stats.filter(s=>s.contractId!==id);if(activeContractId===id)activeContractId=null;persist();renderContracts();}
 
 function exportPDF(id){
-  const c=DB.contracts.find(x=>x.id===id);const p=DB.photographer;const body=fill(c.contractBody,c,p);
+  const c=DB.contracts.find(x=>x.id===id);const p=DB.photographer;const body=applyFillFields(fill(c.contractBody,c,p),c);
   const sigB=(label,sig,name,at)=>sig?`<div class="sw"><p class="sl">${label}</p><img src="${sig}" class="si"><p class="sn">${name||''}</p><p class="sd">Unterzeichnet: ${new Date(at).toLocaleString('de-DE')}</p></div>`:`<div class="sw"><p class="sl">${label}</p><div class="sline"></div><p class="sn">${name||''}</p><p class="sp">Unterschrift ausstehend</p></div>`;
   const logoHtml = p.logo
     ? '<img src="'+p.logo+'" style="max-height:64px;max-width:200px;object-fit:contain;display:block"><div class="brand-sub">'+( p.name||'')+'</div>'
@@ -972,14 +1112,96 @@ function initNewContract(){
   ['nc-mn','nc-me','nc-ma','nc-muaname','nc-muaemail','nc-loc','nc-km'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   document.getElementById('km-msg').textContent='';document.getElementById('km-msg').className='km-status';
   hideRouteMap();
+  // Release-Felder zurücksetzen
+  ['rl-expo','rl-edit','rl-comm','rl-stock'].forEach(id=>{const el=document.getElementById(id);if(el)el.checked=false;});
+  ['rl-portfolio','rl-social'].forEach(id=>{const el=document.getElementById(id);if(el)el.checked=true;});
+  const nameRadio=document.querySelector('input[name="rl-naming"][value="full"]');
+  if(nameRadio)nameRadio.checked=true;
+  ['rl-artistname','rl-birthdate','rl-idcheck'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  const aw=document.getElementById('artist-name-wrap');
+  if(aw)aw.style.display='none';
   const tsel=document.getElementById('nc-tpl');
   tsel.innerHTML=DB.templates.map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
   loadTplText();
   const csel=document.getElementById('nc-contact');
   csel.innerHTML='<option value="">– wählen –</option>'+DB.contacts.map(c=>`<option value="${c.id}">${c.name} (${c.role})</option>`).join('');
 }
-function loadTplText(){const id=document.getElementById('nc-tpl').value;const t=DB.templates.find(x=>x.id===id);if(t)document.getElementById('nc-body').value=t.body;}
-function fillFromContact(){const id=document.getElementById('nc-contact').value;if(!id)return;const c=DB.contacts.find(x=>x.id===id);if(!c)return;document.getElementById('nc-mn').value=c.name||'';document.getElementById('nc-me').value=c.email||'';document.getElementById('nc-ma').value=c.address||'';}
+function loadTplText(){
+  const id=document.getElementById('nc-tpl').value;
+  const t=DB.templates.find(x=>x.id===id);
+  if(t)document.getElementById('nc-body').value=t.body;
+  // Model-Release Optionen ein-/ausblenden
+  const isRelease = t && /EINWILLIGUNGSERKL|Model Release/i.test(t.name + ' ' + (t.body||''));
+  document.getElementById('release-options').style.display = isRelease ? 'block' : 'none';
+}
+
+function toggleArtistField(){
+  const sel=document.querySelector('input[name="rl-naming"]:checked');
+  document.getElementById('artist-name-wrap').style.display = (sel && sel.value==='artist') ? 'block' : 'none';
+}
+
+// Wendet die Release-Optionen auf den Vertragstext an
+function applyReleaseOptions(body){
+  const panel=document.getElementById('release-options');
+  if(!panel || panel.style.display==='none') return body;
+
+  const cb=(id)=>document.getElementById(id) && document.getElementById(id).checked;
+  const mark=(v)=>v?'[x]':'[ ]';
+
+  // § 3 Verwendungszwecke – Reihenfolge muss der Vorlage entsprechen
+  const uses=[
+    ['rl-portfolio','Eigenwerbung und Portfolio des Fotografen (Website, Print-Portfolio)'],
+    ['rl-social','Social-Media-Kanäle des Fotografen (Instagram, Facebook, Pinterest u.a.)'],
+    ['rl-expo','Ausstellungen, Wettbewerbe und Fotobücher'],
+    ['rl-edit','Redaktionelle Veröffentlichungen (Magazine, Blogs)'],
+    ['rl-comm','Kommerzielle Werbung (Anzeigen, Werbekampagnen Dritter)'],
+    ['rl-stock','Bildagenturen / Stockfotografie']
+  ];
+  uses.forEach(([id,label])=>{
+    const re=new RegExp('\\[[ xX]\\] '+label.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'));
+    body=body.replace(re, mark(cb(id))+' '+label);
+  });
+
+  // § 8 Namensnennung
+  const naming=document.querySelector('input[name="rl-naming"]:checked');
+  const nv=naming?naming.value:'full';
+  const artistName=(document.getElementById('rl-artistname')||{}).value||'';
+  body=body.replace(/\[[ xX]\] Das Model wünscht eine Namensnennung bei Veröffentlichungen/,
+    mark(nv==='full')+' Das Model wünscht eine Namensnennung bei Veröffentlichungen');
+  body=body.replace(/\[[ xX]\] Das Model wünscht KEINE Namensnennung \(anonyme Veröffentlichung\)/,
+    mark(nv==='none')+' Das Model wünscht KEINE Namensnennung (anonyme Veröffentlichung)');
+  body=body.replace(/\[[ xX]\] Nennung nur des Künstlernamens: _+/,
+    mark(nv==='artist')+' Nennung nur des Künstlernamens: '+(nv==='artist'&&artistName?artistName:'________________________'));
+
+  // § 6 Geburtsdatum & Ausweisprüfung
+  const bd=(document.getElementById('rl-birthdate')||{}).value;
+  const ic=(document.getElementById('rl-idcheck')||{}).value;
+  if(bd) body=body.replace(/Geburtsdatum: _+/, 'Geburtsdatum: '+fmtDate(bd));
+  if(ic) body=body.replace(/Ausweisdokument geprüft am: _+/, 'Ausweisdokument geprüft am: '+fmtDate(ic));
+
+  return body;
+}
+function fillFromContact(){
+  const id=document.getElementById('nc-contact').value;
+  if(!id)return;
+  const c=DB.contacts.find(x=>x.id===id);
+  if(!c)return;
+  document.getElementById('nc-mn').value=c.name||'';
+  document.getElementById('nc-me').value=c.email||'';
+  document.getElementById('nc-ma').value=c.address||'';
+  // Künstlername ins Model-Release übernehmen falls hinterlegt
+  const artistField=document.getElementById('rl-artistname');
+  if(artistField){
+    artistField.value=c.artistName||'';
+    if(c.artistName){
+      // Automatisch auf "Künstlername" umschalten
+      const radio=document.querySelector('input[name="rl-naming"][value="artist"]');
+      if(radio){radio.checked=true;toggleArtistField();}
+      const hint=document.getElementById('artist-hint');
+      if(hint)hint.style.display='block';
+    }
+  }
+}
 function resetKm(){
   document.getElementById('nc-km').value='';
   document.getElementById('km-msg').textContent='';
@@ -1115,7 +1337,7 @@ function showRouteMap(result){
 function saveContract(){
   const mn=document.getElementById('nc-mn').value.trim();if(!mn){alert('Bitte Model-Name eintragen.');return;}
   const km=document.getElementById('nc-km').value;const sd=document.getElementById('nc-sd').value;const loc=document.getElementById('nc-loc').value;
-  const c={id:uid(),createdAt:new Date().toISOString(),modelName:mn,modelEmail:document.getElementById('nc-me').value,modelAddress:document.getElementById('nc-ma').value,muaName:document.getElementById('nc-muaname').value,muaEmail:document.getElementById('nc-muaemail').value,shootDate:sd,contractDate:document.getElementById('nc-cd').value,location:loc,distanceKm:km!==''?Number(km):null,contractBody:document.getElementById('nc-body').value,sigP:null,sigPAt:null,sigM:null,sigMAt:null};
+  const c={id:uid(),createdAt:new Date().toISOString(),modelName:mn,modelEmail:document.getElementById('nc-me').value,modelAddress:document.getElementById('nc-ma').value,muaName:document.getElementById('nc-muaname').value,muaEmail:document.getElementById('nc-muaemail').value,shootDate:sd,contractDate:document.getElementById('nc-cd').value,location:loc,distanceKm:km!==''?Number(km):null,contractBody:applyReleaseOptions(document.getElementById('nc-body').value),sigP:null,sigPAt:null,sigM:null,sigMAt:null};
   DB.contracts.push(c);
   if(km!==''&&!isNaN(km))DB.stats.push({id:uid(),contractId:c.id,km:Number(km),year:new Date(sd).getFullYear(),date:sd,location:loc});
   persist();activeContractId=c.id;go('contracts');
@@ -1125,13 +1347,13 @@ let editCid=null;
 const RBADGE={Model:'badge-info','Make-up-Artist':'badge-ok',Stylist:'badge-ok',Assistent:'badge-warn',Sonstiges:'badge-accent'};
 function openContactModal(id){
   editCid=id||null;document.getElementById('cm-title').textContent=id?'Kontakt bearbeiten':'Neuer Kontakt';
-  if(id){const c=DB.contacts.find(x=>x.id===id);if(c){document.getElementById('cm-name').value=c.name||'';document.getElementById('cm-role').value=c.role||'Model';document.getElementById('cm-email').value=c.email||'';document.getElementById('cm-phone').value=c.phone||'';document.getElementById('cm-addr').value=c.address||'';document.getElementById('cm-notes').value=c.notes||'';}}
-  else{['cm-name','cm-email','cm-phone','cm-addr','cm-notes'].forEach(i=>document.getElementById(i).value='');document.getElementById('cm-role').value='Model';}
+  if(id){const c=DB.contacts.find(x=>x.id===id);if(c){document.getElementById('cm-name').value=c.name||'';document.getElementById('cm-role').value=c.role||'Model';document.getElementById('cm-email').value=c.email||'';document.getElementById('cm-phone').value=c.phone||'';document.getElementById('cm-addr').value=c.address||'';document.getElementById('cm-notes').value=c.notes||'';document.getElementById('cm-artist').value=c.artistName||'';}}
+  else{['cm-name','cm-email','cm-phone','cm-addr','cm-notes','cm-artist'].forEach(i=>document.getElementById(i).value='');document.getElementById('cm-role').value='Model';}
   openOv('ov-contact');
 }
 function saveContact(){
   const name=document.getElementById('cm-name').value.trim();if(!name)return;
-  const obj={name,role:document.getElementById('cm-role').value,email:document.getElementById('cm-email').value,phone:document.getElementById('cm-phone').value,address:document.getElementById('cm-addr').value,notes:document.getElementById('cm-notes').value};
+  const obj={name,artistName:document.getElementById('cm-artist').value.trim(),role:document.getElementById('cm-role').value,email:document.getElementById('cm-email').value,phone:document.getElementById('cm-phone').value,address:document.getElementById('cm-addr').value,notes:document.getElementById('cm-notes').value};
   if(editCid){DB.contacts=DB.contacts.map(c=>c.id===editCid?{...c,...obj}:c);}else{DB.contacts.push({...obj,id:uid(),createdAt:toDay()});}
   persist();closeOv('ov-contact');renderContacts();
 }
@@ -1139,7 +1361,7 @@ function deleteCon(id,e){if(e)e.stopPropagation();if(!confirm('Kontakt löschen?
 function renderContacts(){
   const g=document.getElementById('contacts-grid');
   if(!DB.contacts.length){g.innerHTML='<div class="empty-state"><div class="empty-icon">👥</div><span>Noch keine Kontakte</span></div>';return;}
-  g.innerHTML=DB.contacts.map(c=>`<div class="contact-card" onclick="openContactModal('${c.id}')"><button class="contact-del" onclick="deleteCon('${c.id}',event)">×</button><div class="contact-name">${pTag(maskName(c.name))}</div><span class="badge ${RBADGE[c.role]||'badge-accent'}">${c.role}</span><div class="contact-meta">${c.email?`<span>✉ ${pTag(maskEmail(c.email))}</span>`:''}${c.phone?`<span>☎ ${pTag(maskPhone(c.phone))}</span>`:''}${c.address?`<span>📍 ${pTag(maskAddr(c.address))}</span>`:''}</div></div>`).join('');
+  g.innerHTML=DB.contacts.map(c=>`<div class="contact-card" onclick="openContactModal('${c.id}')"><button class="contact-del" onclick="deleteCon('${c.id}',event)">×</button><div class="contact-name">${pTag(maskName(c.name))}</div>${c.artistName?'<div style="font-size:11.5px;color:var(--accent);font-style:italic;margin-bottom:6px">&bdquo;'+pTag(maskName(c.artistName))+'&ldquo;</div>':''}<span class="badge ${RBADGE[c.role]||'badge-accent'}">${c.role}</span><div class="contact-meta">${c.email?`<span>✉ ${pTag(maskEmail(c.email))}</span>`:''}${c.phone?`<span>☎ ${pTag(maskPhone(c.phone))}</span>`:''}${c.address?`<span>📍 ${pTag(maskAddr(c.address))}</span>`:''}</div></div>`).join('');
 }
 
 let editTid=null;
@@ -1745,22 +1967,23 @@ function exportIcal() {
 
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
                 (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-  const isAndroid = /Android/i.test(navigator.userAgent);
   const safeName = (s.title||'Shooting').replace(/[^a-z0-9]/gi,'-').toLowerCase();
   const fileName = 'tfp-' + safeName + '-' + s.date + '.ics';
 
+  const blob = new Blob([ics], {type:'text/calendar;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+
   if(isIOS) {
-    // iOS: Safari ignoriert download-Attribut.
-    // Data-URI mit text/calendar öffnet direkt den Kalender-Import-Dialog.
-    const dataUri = 'data:text/calendar;charset=utf-8,' + encodeURIComponent(ics);
-    window.location.href = dataUri;
-    showToast('\uD83D\uDCC5 Kalender \u00F6ffnet sich \u2013 auf "Hinzuf\u00FCgen" tippen', 5000);
+    // iOS: Blob-URL in neuem Tab öffnen – Safari bietet dann "Zu Kalender hinzufügen"
+    const win = window.open(url, '_blank');
+    if(!win) {
+      alert('Bitte Popups erlauben oder den Google-Kalender-Button verwenden.');
+    }
+    setTimeout(() => URL.revokeObjectURL(url), 30000);
     return;
   }
 
-  // Desktop / Android: normaler Download
-  const blob = new Blob([ics], {type:'text/calendar;charset=utf-8'});
-  const url = URL.createObjectURL(blob);
+  // Desktop / Android: Download
   const a = document.createElement('a');
   a.href = url;
   a.download = fileName;
@@ -1768,12 +1991,7 @@ function exportIcal() {
   a.click();
   document.body.removeChild(a);
   setTimeout(() => URL.revokeObjectURL(url), 8000);
-
-  if(isAndroid) {
-    showToast('\u2713 Datei gespeichert \u2013 in Downloads \u00F6ffnen zum Importieren', 5000);
-  } else {
-    showToast('\u2713 Kalenderdatei (.ics) gespeichert');
-  }
+  showToast('\u2713 Kalenderdatei gespeichert – zum Importieren öffnen', 4000);
 }
 
 // Direkt in Google Kalender eintragen (funktioniert auf allen Ger\u00E4ten)
@@ -1873,7 +2091,7 @@ function importJSON(event) {
       }
       if(!confirm('Backup laden?\n\n⚠ Alle aktuellen Daten werden überschrieben!\n\nDatei: ' + file.name)) return;
       DB = parsed;
-      [{id:'t1',name:'Standard TfP-Vertrag',body:TPL1},{id:'t2',name:'Erweiterter TfP-Vertrag (inkl. MUA)',body:TPL2},{id:'t3',name:'TfP kommerziell – OnlyFans',body:TPL3},{id:'t4',name:'TfP kommerziell – Patreon',body:TPL4}].forEach(t=>{
+      [{id:'t1',name:'Standard TfP-Vertrag',body:TPL1},{id:'t2',name:'Erweiterter TfP-Vertrag (inkl. MUA)',body:TPL2},{id:'t3',name:'TfP kommerziell – OnlyFans',body:TPL3},{id:'t4',name:'TfP kommerziell – Patreon',body:TPL4},{id:'t5',name:'Model Release / Einwilligungserklärung',body:TPL5}].forEach(t=>{
         if(!DB.templates) DB.templates=[];
         if(!DB.templates.find(x=>x.id===t.id)) DB.templates.push(t);
       });
