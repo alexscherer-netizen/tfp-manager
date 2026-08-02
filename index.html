@@ -284,7 +284,7 @@ canvas.sig-pad{display:block;width:100%;border:1px dashed var(--border);border-r
     <div><div class="page-title">Dashboard</div><div class="page-subtitle" id="dash-greeting">Willkommen beim TfP Manager.</div></div>
     <button class="btn btn-primary" onclick="go('new-contract')">✚ Neuer Vertrag</button>
   </div>
-  <div id="dash-alert" class="alert-banner" style="display:none">⚠ Bitte Heimatstadt im Profil eintragen – wird für die automatische km-Berechnung benötigt.<button class="btn btn-sm btn-outline" onclick="go('settings')">Zum Profil</button></div>
+  <div id="dash-alert" class="alert-banner" style="display:none">⚠ Bitte vollständige Adresse im Profil eintragen – wird als Startpunkt für die km-Berechnung verwendet.<button class="btn btn-sm btn-outline" onclick="go('settings')">Zum Profil</button></div>
   <div class="stat-grid" id="dash-stats"></div>
   <!-- Anstehende Shootings -->
   <div id="dash-shootings-wrap" style="margin-bottom:14px;display:none">
@@ -385,8 +385,8 @@ canvas.sig-pad{display:block;width:100%;border:1px dashed var(--border);border-r
   <div class="card" style="max-width:500px">
     <div class="form-grid">
       <div class="field"><label class="field-label">Vollständiger Name</label><input type="text" id="p-name" placeholder="Max Mustermann"></div>
-      <div class="field"><label class="field-label">Adresse</label><input type="text" id="p-addr" placeholder="Musterstr. 1, 12345 Berlin"></div>
-      <div class="field"><label class="field-label">Heimatstadt (für km-Berechnung)</label><input type="text" id="p-city" placeholder="Berlin"></div>
+      <div class="field"><label class="field-label">Adresse (Startpunkt für Routenberechnung)</label><input type="text" id="p-addr" placeholder="Mertensstraße 18, 13587 Berlin"></div>
+      <div class="field"><label class="field-label">Heimatstadt (Fallback falls Adresse leer)</label><input type="text" id="p-city" placeholder="Berlin"></div>
       <div class="field"><label class="field-label">E-Mail</label><input type="email" id="p-email" placeholder="foto@beispiel.de"></div>
       <div class="sep" style="margin:4px 0"></div>
       <div class="field">
@@ -590,7 +590,8 @@ canvas.sig-pad{display:block;width:100%;border:1px dashed var(--border);border-r
     <div class="btn-row" style="justify-content:space-between">
       <button class="btn btn-danger btn-sm" id="sm-delete-btn" onclick="deleteShooting()" style="display:none">Löschen</button>
       <div class="btn-row" style="margin-left:auto">
-        <button class="btn btn-ghost btn-sm" id="sm-ical-btn" onclick="exportIcal()" style="display:none" title="Termin in Apple/Google/Outlook Kalender importieren">📅 In Kalender</button>
+        <button class="btn btn-ghost btn-sm" id="sm-ical-btn" onclick="exportIcal()" style="display:none" title="Als .ics Datei – für Apple Kalender, Outlook">📅 Kalender (.ics)</button>
+        <button class="btn btn-ghost btn-sm" id="sm-gcal-btn" onclick="exportGoogleCal()" style="display:none" title="Direkt in Google Kalender eintragen">🗓️ Google</button>
         <button class="btn btn-ghost" onclick="closeOv('ov-shooting')">Abbrechen</button>
         <button class="btn btn-primary" onclick="saveShooting()">Speichern</button>
       </div>
@@ -823,7 +824,7 @@ function renderDashboard(){
   const half=DB.contracts.filter(c=>(c.sigP||c.sigM)&&!(c.sigP&&c.sigM)).length;
   const open=DB.contracts.filter(c=>!c.sigP&&!c.sigM).length;
   document.getElementById('dash-greeting').textContent=p.name?`Willkommen zurück, ${p.name.split(' ')[0]}.`:'Willkommen beim TfP Manager.';
-  document.getElementById('dash-alert').style.display=p.homeCity?'none':'flex';
+  document.getElementById('dash-alert').style.display=(p.address||p.homeCity)?'none':'flex';
   document.getElementById('sb-info').textContent=p.name?'👤 '+p.name:'⚠ Profil ausfüllen';
   document.getElementById('dash-stats').innerHTML=[{v:DB.contracts.length,l:'Verträge gesamt'},{v:full,l:'Vollständig signiert'},{v:half,l:'Teilweise signiert'},{v:open,l:'Noch offen'},{v:kmYr+' km',l:'Kilometer '+yr},{v:kmAll+' km',l:'Kilometer gesamt'}].map(t=>`<div class="stat-tile"><div class="stat-val">${t.v}</div><div class="stat-lbl">${t.l}</div></div>`).join('');
   const rows=[...DB.contracts].reverse().slice(0,8).map(c=>{const done=c.sigP&&c.sigM,h=(c.sigP||c.sigM)&&!done;const badge=done?'<span class="badge badge-ok">Vollständig</span>':h?'<span class="badge badge-warn">Teilweise</span>':'<span class="badge badge-err">Offen</span>';return`<tr onclick="openCfromDash('${c.id}')" style="cursor:pointer"><td><strong>${pTag(maskName(c.modelName||'–'))}</strong></td><td>${fmtDate(c.shootDate)}</td><td>${pTag(maskAddr(c.location||'–'))}</td><td>${c.distanceKm!=null?c.distanceKm+' km':'–'}</td><td>${badge}</td></tr>`;}).join('');
@@ -998,13 +999,14 @@ async function autoKm(){
   const loc=document.getElementById('nc-loc').value.trim();
   const msg=document.getElementById('km-msg');
   const btn=document.getElementById('km-btn');
-  if(!p.homeCity){msg.textContent='\u26A0 Bitte zuerst Heimatstadt im Profil eintragen.';msg.className='km-status km-err';return;}
+  const startAddr=(p.address&&p.address.trim())?p.address.trim():(p.homeCity||'').trim();
+  if(!startAddr){msg.textContent='\u26A0 Bitte zuerst Adresse oder Heimatstadt im Profil eintragen.';msg.className='km-status km-err';return;}
   if(!loc){msg.textContent='\u26A0 Bitte zuerst eine Location eintragen.';msg.className='km-status km-err';return;}
   btn.textContent='\u23F3 Berechne\u2026';btn.disabled=true;
   msg.textContent='';msg.className='km-status';
   hideRouteMap();
   try{
-    const result=await calcRoute(p.homeCity,loc);
+    const result=await calcRoute(startAddr,loc);
     document.getElementById('nc-km').value=result.km;
     msg.textContent='\u2713 '+result.km+' km \u2013 direkte Fahrtstrecke (OpenStreetMap / OSRM)';
     msg.className='km-status km-ok';
@@ -1039,6 +1041,15 @@ async function calcRoute(from,to){
   };
 }
 
+// Kürzt lange Nominatim-Adressen auf die wichtigsten Teile
+function shortenAddr(fullName){
+  if(!fullName)return '–';
+  const parts=fullName.split(',').map(s=>s.trim());
+  if(parts.length<=3)return parts.join(', ');
+  // Erste 2 Teile (Straße/Hausnummer, Stadtteil) + PLZ/Stadt
+  return parts.slice(0,2).join(', ')+', '+parts.slice(-3,-1).join(' ');
+}
+
 function showRouteMap(result){
   const mapEl=document.getElementById('route-map');
   const sumEl=document.getElementById('route-summary');
@@ -1052,7 +1063,11 @@ function showRouteMap(result){
   sumEl.innerHTML=
      '<div class="route-stat"><span class="route-stat-label">Strecke einfach</span><span class="route-stat-val">'+result.km+' km</span></div>'
     +'<div class="route-stat"><span class="route-stat-label">Hin &amp; R\u00FCck</span><span class="route-stat-val">'+(result.km*2)+' km</span></div>'
-    +'<div class="route-stat"><span class="route-stat-label">Fahrzeit ca.</span><span class="route-stat-val">'+timeStr+'</span></div>';
+    +'<div class="route-stat"><span class="route-stat-label">Fahrzeit ca.</span><span class="route-stat-val">'+timeStr+'</span></div>'
+    +'<div class="route-stat" style="flex-basis:100%;border-top:1px solid var(--border);padding-top:8px;margin-top:4px">'
+      +'<span class="route-stat-label">Gefundene Route</span>'
+      +'<span style="font-size:11px;color:var(--muted);line-height:1.6">\uD83C\uDFE0 '+shortenAddr(result.start.name)+'<br>\uD83D\uDCF7 '+shortenAddr(result.end.name)+'</span>'
+    +'</div>';
 
   // Init map once
   if(!routeMap){
@@ -1077,8 +1092,9 @@ function showRouteMap(result){
     html:'<div style="background:#5ec48a;width:26px;height:26px;border-radius:50%;border:3px solid #0c0c14;box-shadow:0 2px 8px rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;font-size:13px">\uD83C\uDFE0</div>',
     iconSize:[26,26],iconAnchor:[13,13]
   });
+  const startLabel=(DB.photographer.address&&DB.photographer.address.trim())?DB.photographer.address:DB.photographer.homeCity;
   L.marker([result.start.lat,result.start.lon],{icon:startIcon}).addTo(routeLayer)
-    .bindPopup('<strong>Start</strong><br>'+DB.photographer.homeCity);
+    .bindPopup('<strong>Start (Fotograf)</strong><br>'+startLabel);
 
   // End marker (location)
   const endIcon=L.divIcon({
@@ -1597,6 +1613,7 @@ function openShootingModal(id, prefillDate) {
   document.getElementById('sm-title').textContent = id ? 'Shooting bearbeiten' : 'Neues Shooting';
   document.getElementById('sm-delete-btn').style.display = id ? 'inline-flex' : 'none';
   document.getElementById('sm-ical-btn').style.display = id ? 'inline-flex' : 'none';
+  document.getElementById('sm-gcal-btn').style.display = id ? 'inline-flex' : 'none';
   // Fill contract select
   const csel = document.getElementById('sm-contract');
   csel.innerHTML = '<option value="">– keinen –</option>' +
@@ -1656,40 +1673,47 @@ function deleteShooting() {
   showToast('Shooting gelöscht');
 }
 
-function exportIcal() {
-  const s = DB.shootings.find(x => x.id === editShootingId);
-  if(!s) return;
-  const p = DB.photographer;
-
-  // Build datetime strings
+function buildIcsContent(s, p) {
   const dateClean = s.date.replace(/-/g,'');
   let dtStart, dtEnd;
   if(s.time) {
-    const [h, m] = s.time.split(':');
+    const parts = s.time.split(':');
+    const h = parseInt(parts[0],10), m = parseInt(parts[1],10);
     const pad = n => String(n).padStart(2,'0');
     dtStart = dateClean + 'T' + pad(h) + pad(m) + '00';
-    // Default 2h duration
-    const endH = (parseInt(h) + 2) % 24;
+    const endH = (h + 2) % 24;
     dtEnd = dateClean + 'T' + pad(endH) + pad(m) + '00';
   } else {
     dtStart = dateClean;
-    dtEnd   = dateClean;
+    const d = new Date(s.date);
+    d.setDate(d.getDate()+1);
+    dtEnd = d.toISOString().slice(0,10).replace(/-/g,'');
   }
 
   const now = new Date().toISOString().replace(/[-:.]/g,'').slice(0,15) + 'Z';
-  const uid_val = s.id + '@tfp-manager';
+  const uidVal = s.id + '@tfp-manager';
 
-  // Build reminder block
-  let alarmBlock = '';
+  // Text escapen nach RFC 5545
+  const esc = t => String(t||'').replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\n/g,'\\n');
+
+  let alarmBlock = [];
   if(s.reminder) {
     alarmBlock = [
       'BEGIN:VALARM',
       'TRIGGER:-P' + s.reminder + 'D',
       'ACTION:DISPLAY',
-      'DESCRIPTION:Erinnerung: ' + (s.title||'Shooting'),
+      'DESCRIPTION:' + esc('Erinnerung: ' + (s.title||'Shooting')),
       'END:VALARM'
-    ].join('\r\n');
+    ];
   }
+
+  const descParts = [
+    'Fotograf/in: ' + (p.name||''),
+    s.notes ? 'Notizen: ' + s.notes : '',
+    'Status: ' + (STATUS_LABEL[s.status]||'Offen'),
+    '',
+    'Erstellt mit TfP Manager'
+  ].filter(Boolean);
 
   const lines = [
     'BEGIN:VCALENDAR',
@@ -1698,34 +1722,94 @@ function exportIcal() {
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
     'BEGIN:VEVENT',
-    'UID:' + uid_val,
+    'UID:' + uidVal,
     'DTSTAMP:' + now,
     s.time ? 'DTSTART:' + dtStart : 'DTSTART;VALUE=DATE:' + dtStart,
-    s.time ? 'DTEND:' + dtEnd   : 'DTEND;VALUE=DATE:' + dtEnd,
-    'SUMMARY:📷 TfP Shooting – ' + (s.title||'Shooting'),
-    s.location ? 'LOCATION:' + s.location : '',
-    'DESCRIPTION:' + [
-      'Fotograf/in: ' + (p.name||''),
-      s.notes ? 'Notizen: ' + s.notes : '',
-      'Status: ' + (STATUS_LABEL[s.status]||'Offen'),
-      '',
-      'Erstellt mit TfP Manager'
-    ].filter(Boolean).join('\\n'),
+    s.time ? 'DTEND:' + dtEnd : 'DTEND;VALUE=DATE:' + dtEnd,
+    'SUMMARY:' + esc('TfP Shooting - ' + (s.title||'Shooting')),
+    s.location ? 'LOCATION:' + esc(s.location) : '',
+    'DESCRIPTION:' + esc(descParts.join('\n')),
     'STATUS:' + (s.status==='confirmed' ? 'CONFIRMED' : s.status==='cancelled' ? 'CANCELLED' : 'TENTATIVE'),
-    alarmBlock,
-    'END:VEVENT',
-    'END:VCALENDAR'
-  ].filter(l => l !== '').join('\r\n');
+    'TRANSP:OPAQUE'
+  ].filter(l => l !== '');
 
-  const blob = new Blob([lines], {type:'text/calendar;charset=utf-8'});
+  const all = lines.concat(alarmBlock, ['END:VEVENT','END:VCALENDAR']);
+  return all.join('\r\n');
+}
+
+function exportIcal() {
+  const s = DB.shootings.find(x => x.id === editShootingId);
+  if(!s) return;
+  const p = DB.photographer;
+  const ics = buildIcsContent(s, p);
+
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+                (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const isAndroid = /Android/i.test(navigator.userAgent);
+  const safeName = (s.title||'Shooting').replace(/[^a-z0-9]/gi,'-').toLowerCase();
+  const fileName = 'tfp-' + safeName + '-' + s.date + '.ics';
+
+  if(isIOS) {
+    // iOS: Safari ignoriert download-Attribut.
+    // Data-URI mit text/calendar öffnet direkt den Kalender-Import-Dialog.
+    const dataUri = 'data:text/calendar;charset=utf-8,' + encodeURIComponent(ics);
+    window.location.href = dataUri;
+    showToast('\uD83D\uDCC5 Kalender \u00F6ffnet sich \u2013 auf "Hinzuf\u00FCgen" tippen', 5000);
+    return;
+  }
+
+  // Desktop / Android: normaler Download
+  const blob = new Blob([ics], {type:'text/calendar;charset=utf-8'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  const safeName = (s.title||'Shooting').replace(/[^a-z0-9]/gi,'-').toLowerCase();
   a.href = url;
-  a.download = 'tfp-' + safeName + '-' + s.date + '.ics';
+  a.download = fileName;
+  document.body.appendChild(a);
   a.click();
-  setTimeout(() => URL.revokeObjectURL(url), 5000);
-  showToast('✓ Kalenderdatei (.ics) gespeichert');
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 8000);
+
+  if(isAndroid) {
+    showToast('\u2713 Datei gespeichert \u2013 in Downloads \u00F6ffnen zum Importieren', 5000);
+  } else {
+    showToast('\u2713 Kalenderdatei (.ics) gespeichert');
+  }
+}
+
+// Direkt in Google Kalender eintragen (funktioniert auf allen Ger\u00E4ten)
+function exportGoogleCal() {
+  const s = DB.shootings.find(x => x.id === editShootingId);
+  if(!s) return;
+  const p = DB.photographer;
+
+  const dateClean = s.date.replace(/-/g,'');
+  let dates;
+  if(s.time) {
+    const parts = s.time.split(':');
+    const h = parseInt(parts[0],10), m = parseInt(parts[1],10);
+    const pad = n => String(n).padStart(2,'0');
+    const endH = (h + 2) % 24;
+    dates = dateClean + 'T' + pad(h) + pad(m) + '00/' + dateClean + 'T' + pad(endH) + pad(m) + '00';
+  } else {
+    const d = new Date(s.date);
+    d.setDate(d.getDate()+1);
+    dates = dateClean + '/' + d.toISOString().slice(0,10).replace(/-/g,'');
+  }
+
+  const details = [
+    'Fotograf/in: ' + (p.name||''),
+    s.notes ? 'Notizen: ' + s.notes : '',
+    'Status: ' + (STATUS_LABEL[s.status]||'Offen')
+  ].filter(Boolean).join('\n');
+
+  const url = 'https://calendar.google.com/calendar/render?action=TEMPLATE'
+    + '&text=' + encodeURIComponent('TfP Shooting - ' + (s.title||'Shooting'))
+    + '&dates=' + dates
+    + '&details=' + encodeURIComponent(details)
+    + (s.location ? '&location=' + encodeURIComponent(s.location) : '');
+
+  window.open(url, '_blank');
+  showToast('\uD83D\uDCC5 Google Kalender wird ge\u00F6ffnet');
 }
 
 function checkReminders() {
